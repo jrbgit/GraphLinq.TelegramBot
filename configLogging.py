@@ -12,5 +12,5 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S')
 # Begin Logging
 logging.info('')
-logging.info('[STARTING] --==[[ Python Telegram Bot v1.0.5 ]]==--')
+logging.info('[STARTING] --==[[ Python Telegram Bot v1.0.6 ]]==--')
 logging.info('[VARIABLE] Logging Initialized')

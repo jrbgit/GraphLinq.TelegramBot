@@ -5,7 +5,7 @@ import logging
 maintMode = 0
 
 # Admin that can bypass maintenance mode
-allowedAdmin = 1234567
+allowedAdmin = 1392716682
 
 # Maintenance Mode Messages
 maintModeMsg = 'This bot is in maintenance mode. Check back soon.'

@@ -2,41 +2,63 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, filters
 import datetime
 from datetime import timedelta
 import json
-from web3 import Web3
 import requests
 import decimal
-import locale
 import sqlite3
 from contextlib import closing
 import re
-import logging
 from eth_utils.address import (
-    is_address,
-    is_binary_address,
-    is_canonical_address,
-    is_checksum_address,
-    is_checksum_formatted_address,
-    is_hex_address,
-    is_normalized_address,
-    is_same_address,
-    to_canonical_address,
-    to_checksum_address,
-    to_normalized_address,
+    is_address
 )
 
 # Logging
-from configLogging import *
+from configLogging import (
+    logging
+)
+
 # Maintenance
-from configMaint import *
+from configMaint import (
+    maintMode,
+    maintModeMsg,
+    allowedAdmin,
+    maintModeLogMsgOn,
+    maintModeLogMsgOff
+)
+
 # Bot Response Messages
-from configMsgs import *
+from configMsgs import (
+    helpMsg,
+    privateMsg,
+    websites,
+    socials,
+    staking,
+    shortcuts,
+    cexListings,
+    dexListings,
+    status,
+    setAddressMsg,
+    apply
+)
+
 # Base Configuration
-from configBase import *
+from configBase import (
+    lcwUrl,
+    lcwFiatsUrl,
+    telegram,
+    lcwApiKey
+)
+
 # Web3 Configuration
-from configContract import *
+from configContract import (
+    contract,
+    web3
+)
+
+
 
 ###############################################
 ##########     INITIAL  FUNCTIONS    ##########
+
 
 # Start the Bot Message
 def start(update, context):
@@ -54,16 +76,13 @@ def getHelp(update, context):
         logging.info('[MAINTMSG] /help:{}' .format(chatId))
         update.message.reply_text(helpMsg)
         logging.info('[RESPONSE] /help:{} sent help menu' .format(chatId))
-    else:
-        logging.info('[MAINTMSG] /help:{}' .format(chatId))
-        update.message.reply_text(maintModeMsg)
-        logging.info('[MAINTMSG] /help:{}' .format(maintModeMsg))
     logging.info('[COMPLETE] /help:{}' .format(chatId))
 
 
 
 ###############################################
 ###########     SETTER FUNCTIONS    ###########
+
 
 # Set My Address
 def setMyAddress(update, context):
@@ -110,22 +129,20 @@ def setMyAddress(update, context):
             except (IndexError, ValueError):
                 logging.info('[RESPONSE] /setmyaddress:{} please provide your address...' .format(chatId))
                 update.message.reply_text('Please provide your address...')
-    else:
-        update.message.reply_text(maintModeMsg)
     logging.info('[COMPLETE] /setmyaddress:{}' .format(chatId))
 
 
 # Set My Fiat
-def setMyfiat(update, context):
+def setMyFiat(update, context):
     chatId = update.message.chat_id
     logging.info('[STARTING] /setmyfiat:{}' .format(chatId))
     if (getMaintMode(update, context) == False):
         if (chatId > 0):
             logging.info('[DATABASE] /setmyfiat:{} set address in database' .format(chatId))
             try:
-                myfiat = context.args[0]
-                if (is_address(myAddress)):
-                    logging.info('[DATABASE] /setmyfiat{} valid address' .format(chatId))
+                myFiat = context.args[0]
+                if (myFiat):
+                    logging.info('[DATABASE] /setmyfiat{} NOT VERIFIED VALID FORMAT!' .format(chatId))
                     connection = sqlite3.connect("map.db")
                     cursor = connection.cursor()
                     row = cursor.execute(
@@ -133,39 +150,39 @@ def setMyfiat(update, context):
                         (chatId,),
                     ).fetchone()
                     if (row == None):
-                        logging.info('[DATABASE] /setmyfiat:{} insert address into database' .format(chatId))
-                        cursor.execute(
-                            "INSERT INTO users (chatId, address, currency) VALUES (?, ?, ?)",
-                            (chatId, myAddress,)
-                        )
                         connection.commit()
-                        update.message.reply_text('New address set: {}' .format(myAddress))
-                        logging.info('[DATABASE] /setmyfiat:{} record added' .format(chatId))
+                        update.message.reply_text('New fiat set: {}' .format(myFiat))
+                        logging.info('[DATABASE] /setmyfiat:{} update fiat: {}' .format(chatId, myFiat))
                     else:
-                        if (row[0] == myAddress):
-                            update.message.reply_text('Address is the same...')
-                            logging.info('[RESPONSE] /setmyfiat:{} address is the same...' .format(chatId))
+                        if (row[0] == myFiat):
+                            update.message.reply_text('Fiat is the same...')
+                            logging.info('[RESPONSE] /setmyfiat:{} fiat is the same...' .format(chatId))
                         else:
+                            logging.info('[DATABASE] /setmyfiat:{} insert fiat code into database' .format(chatId))
                             cursor.execute(
-                                "UPDATE users SET address = ? WHERE chat_id = ?",
-                                (myAddress, chatId,)
+                                "UPDATE users SET currency = ? WHERE chat_id = ?",
+                                (myFiat, chatId,)
                             )
                             connection.commit()
-                            update.message.reply_text('Updated address to: {}' .format(row[0]))
-                            logging.info('[RESPONSE] /setmyfiat:{} address changed to {}' .format(chatId, myAddress))
+                            update.message.reply_text('Updated fiat to: {}' .format(myFiat))
+                            logging.info('[RESPONSE] /setmyfiat:{} fiat changed to {}' .format(chatId, myFiat))
                     connection.close()
                 else:
                     update.message.reply_text('Invalid address...')
-                    logging.info('[RESPONSE] /setmyfiat:{} invalid address {}' .format(chatId, myAddress))
+                    logging.info('[RESPONSE] /setmyfiat:{} invalid address {}' .format(chatId, myFiat))
             except (IndexError, ValueError):
-                logging.info('[RESPONSE] /setmyfiat:{} please provide your address...' .format(chatId))
-                update.message.reply_text('Please provide your address...')
-    logging.info('[COMPLETE] /setmyaddress:{}' .format(chatId))
+                logging.info('[RESPONSE] /setmyfiat:{} please provide your fiat...' .format(chatId))
+                update.message.reply_text('Please provide your fiat...')
+    logging.info('[COMPLETE] /setmyfiat:{}' .format(chatId))
+
+
+# Set Seperator
 
 
 
 ###############################################
 #########     MY GETTER FUNCTIONS    ##########
+
 
 # Get My Address
 def getMyAddress(update, context):
@@ -190,22 +207,20 @@ def getMyAddress(update, context):
                 connection.close()
             except (IndexError, ValueError):
                 update.message.reply_text('Usage: /address')
-                logging.info('[RESPONSE] /myAddress:{} invalid address {}' .format(chatId, myAddress))
+                logging.info('[RESPONSE] /myAddress:{} invalid address ' .format(chatId))
         else:
-            update.message.reply_text(privateMessage)
-            logging.info('[RESPONSE] /myAddress:{} {}' .format(chatId, privateMessage))
-    else:
-        update.message.reply_text(maintModeMsg)
+            update.message.reply_text(privateMsg)
+            logging.info('[RESPONSE] /myAddress:{} {}' .format(chatId, privateMsg))
     logging.info('[COMPLETE] /myAddress:{}' .format(chatId))
 
 
 # Get My Fiat
-def getMyfiat(update, context):
+def getMyFiat(update, context):
     chatId = update.message.chat_id
     logging.info('[STARTING] /myfiat:{}' .format(chatId))
     if (getMaintMode(update, context) == False):
         if (chatId > 0):
-            logging.info('[DATABASE] /myfiat:{} view address in database' .format(chatId))
+            logging.info('[DATABASE] /myfiat:{} view fiat set in database' .format(chatId))
             try:
                 connection = sqlite3.connect("map.db")
                 cursor = connection.cursor()
@@ -214,24 +229,16 @@ def getMyfiat(update, context):
                     (chatId,),
                 ).fetchone()
                 if (row == None):
-                    update.message.reply_text('No fiat set. Use /setmyfiat <address> first')
+                    update.message.reply_text('No address set. Use /setmyaddress <address> first')
                     logging.info('[RESPONSE] /myfiat:{} no address found' .format(chatId))
                 else:
-                    update.message.reply_text('Address: {} (use /set <address> to use a different address' .format(row[0]))
-                    logging.info('[RESPONSE] /myfiat:{} address: {}' .format(chatId, row[0]))
+                    update.message.reply_text('Fiat: {} (use /setmyfiat <FIAT> to use a different base fiat currency' .format(row[0]))
+                    logging.info('[RESPONSE] /myfiat:{} fiat: {}' .format(chatId, row[0]))
                 connection.close()
             except (IndexError, ValueError):
                 update.message.reply_text('Usage: /myfiat')
-                logging.info('[RESPONSE] /myfiat:{} invalid address {}' .format(chatId, myAddress))
-        else:
-            update.message.reply_text(privateMessage)
-            logging.info('[RESPONSE] /myfiat:{} {}' .format(chatId, privateMessage))
+                logging.info('[RESPONSE] /myfiat:{} invalid fiat {}' .format(chatId, row[0]))
     logging.info('[COMPLETE] /myfiat:{}' .format(chatId))
-
-
-# Get My APY's
-def getMyApy(update, context):
-    print("not implemented")
 
 
 # Get My Rank
@@ -248,7 +255,7 @@ def getMyRank(update, context):
                 (chatId,),
             ).fetchone()
             if (row == None):
-                update.message.reply_text(setmsg)
+                update.message.reply_text(setAddressMsg)
                 logging.info('[DATABASE] /myrank:{} get address from database' .format(chatId))
             else:
                 myAddress = row[0]
@@ -271,10 +278,8 @@ def getMyRank(update, context):
                     update.message.reply_text('Usage: /myrank after you /setaddress your wallet address')
                     logging.info('[RESPONSE] /myrank:{} sage: /myrank after you /setaddress your wallet address' .format(chatId))
         else:
-            update.message.reply_text(privateMessage)
-            logging.info('[RESPONSE] /myrank:{} {}' .format(chatId, privateMessage))
-    else:
-        update.message.reply_text(maintModeMsg)
+            update.message.reply_text(privateMsg)
+            logging.info('[RESPONSE] /myrank:{} {}' .format(chatId, privateMsg))
     logging.info('[COMPLETE] /myrank:{}' .format(chatId))
 
 
@@ -320,8 +325,6 @@ def getMyRewards(update, context):
         else:
             update.message.reply_text(privateMsg)
             logging.info('[RESPONSE] {}'.format(privateMsg))
-    else:
-        update.message.reply_text(maintModeMsg)
     logging.info('[COMPLETE] /myrewards:{}' .format(chatId))
 
 
@@ -345,7 +348,7 @@ def getMyTier(update, context):
                 myAddress = row[0]
                 logging.info('[DATABASE] /mytier:{} matched address {}' .format(chatId, myAddress))
                 try:
-                    if (is_address(address)):
+                    if (is_address(myAddress)):
                         userTotal = contract.functions.getWalletCurrentTier(myAddress).call()
                         text = 'You are in tier: {}'
                         update.message.reply_text(text .format(userTotal))
@@ -358,10 +361,8 @@ def getMyTier(update, context):
                     update.message.reply_text('This address has no tier.')
                     logging.info('[RESPONSE] /mytier:{} address has no tier' .format(chatId))
         else:
-            update.message.reply_text(privateMessage)
-            logging.info('[RESPONSE] /mytier:{} {}' .format(chatId, privateMessage))
-    else:
-        update.message.reply_text(maintModeMsg)
+            update.message.reply_text(privateMsg)
+            logging.info('[RESPONSE] /mytier:{} {}' .format(chatId, privateMsg))
     logging.info('[COMPLETE] /mytier:{}' .format(chatId))
 
 
@@ -407,8 +408,6 @@ def getMyTotal(update, context):
         else:
             update.message.reply_text(privateMsg)
             logging.info('[RESPONSE] /mytotal:{} {}'.format(chatId, privateMsg))
-    else:
-        update.message.reply_text(maintModeMsg)
     logging.info('[COMPLETE] /mytotal:{}' .format(chatId))
 
 
@@ -431,8 +430,6 @@ def getApy(update, context):
         response = 'Tier 1: {}%\nTier 2: {}%\nTier 3: {}%' .format(a[0], a[1], a[2])
         update.message.reply_text(response)
         logging.info('[RESPONSE] /apy:{} Tier 1: {}% Tier 2: {}% Tier 3: {}%' .format(chatId, a[0], a[1], a[2]))
-    else:
-        update.message.reply_text(maintModeMsg)
     logging.info('[COMPLETE] /apy:{}' .format(chatId))
 
 
@@ -442,15 +439,13 @@ def getPrice(update, context):
     logging.info('[STARTING] /price:{}' .format(chatId))
     if (getMaintMode(update, context) == False):
         logging.info('[LCWQUERY] /price:{} {}' .format(chatId, lcwUrl))
-        response = getLiveCoinWatch(update, context)
-        data = response
+        data = getLiveCoinWatch(update, context)
+        symbol = "$"
         rate = data["rate"]
         price = ("{:.6f}".format(rate))
-        text = "Price: ${}"
-        update.message.reply_text(text .format(price))
-        logging.info('[RESPONSE] /price:{} {}' .format(chatId, price))
-    else:
-        update.message.reply_text(maintModeMsg)
+        text = "Price: {} {}"
+        update.message.reply_text(text .format(symbol, price))
+        logging.info('[RESPONSE] /price:{} {} {}' .format(chatId, symbol, price))
     logging.info('[COMPLETE] /price:{}' .format(chatId))
 
 
@@ -472,8 +467,6 @@ def getPriceData(update, context):
         response = "Price: ${}\nVolume: ${}\nATH: ${}\nMcap: ${}"
         logging.info('[RESPONSE] /pricedata:{} Price: ${} Volume: ${} ATH: ${} Mcap: ${}' .format(chatId, rate, vol, ath, mcap))
         update.message.reply_text(response .format(rate, vol, ath, mcap))
-    else:
-        update.message.reply_text(maintModeMsg)
     logging.info('[COMPLETE] /pricedata:{}' .format(chatId))
 
 
@@ -526,8 +519,6 @@ def getPriceDataFull(update, context):
 
         logging.info(respLog .format(chatId, rate, vol, ath, mcap, hourDelta, dayDelta, weekDelta, monthDelta, quarterDelta, yearDelta, rank, exchanges, markets, pairs, age))
         update.message.reply_text(response .format(rate, vol, ath, mcap, hourDelta, dayDelta, weekDelta, monthDelta, quarterDelta, yearDelta, rank, exchanges, markets, pairs, age))
-    else:
-        update.message.reply_text(maintModeMsg)
     logging.info('[COMPLETE] /pricedatafull:{}' .format(chatId))
 
 
@@ -561,8 +552,6 @@ def getTiers(update, context):
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /tiers')
             logging.info('[RESPONSE] /tiers:{} Usage: /tiers' .format(chatId))
-    else:
-        update.message.reply_text(maintModeMsg)
     logging.info('[COMPLETE] /tiers:{}' .format(chatId))
 
 
@@ -600,8 +589,6 @@ def getTop(update, context):
         response = ('#1 {} || GLQ: {} || Value ≈ ${}\n#2 {} || GLQ: {} || Value ≈ ${}\n#3 {} || GLQ: {} || Value ≈ ${}' .format(first, convF, fT, second, convS, sT, third, convT, tT))
         update.message.reply_text(response)
         logging.info('[RESPONSE] /top:{} #1 {} || GLQ: {} || Value ≈ ${} #2 {} || GLQ: {} || Value ≈ ${} #3 {} || GLQ: {} || Value ≈ ${}' .format(chatId, first, convF, fT, second, convS, sT, third, convT, tT))
-    else:
-        update.message.reply_text(maintModeMsg)
     logging.info('[COMPLETE] /top:{}' .format(chatId))
 
 
@@ -630,8 +617,6 @@ def getTotalStaked(update, context):
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /staked')
             logging.info('[RESPONSE] /totalstaked:{} usage /staked')
-    else:
-        update.message.reply_text(maintModeMsg)
     logging.info('[COMPLETE] /totalstaked:{}' .format(chatId))
 
 
@@ -649,8 +634,6 @@ def getTotalStakers(update, context):
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /stakers')
             logging.info('[RESPONSE] /totalstakers:{} usage: /stakers' .format(chatId))
-    else:
-        update.message.reply_text(maintModeMsg)
     logging.info('[COMPLETE] /totalstakers:{}' .format(chatId))
 
 
@@ -674,8 +657,6 @@ def getWebsites(update, context):
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /websites')
             logging.info('[RESPONSE] /websites:{} usage: /websites' .format(chatId))
-    else:
-        update.message.reply_text(maintModeMsg)
     logging.info('[COMPLETE] /websites:{}' .format(chatId))
 
 
@@ -694,8 +675,6 @@ def getSocials(update, context):
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /socials')
             logging.info('[RESPONSE] /socials:{} usage: /socials' .format(chatId))
-    else:
-        update.message.reply_text(maintModeMsg)
     logging.info('[COMPLETE] /socials:{}' .format(chatId))
 
 
@@ -714,8 +693,6 @@ def getStaking(update, context):
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /socials')
             logging.info('[RESPONSE] /staking:{} usage: /staking' .format(chatId))
-    else:
-        update.message.reply_text(maintModeMsg)
     logging.info('[COMPLETE] /staking:{}' .format(chatId))
 
 
@@ -731,8 +708,6 @@ def getDocumentation(update, context):
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /documentation')
             logging.info('[RESPONSE] /documentation:{} usage: /documentation' .format(chatId))
-    else:
-        update.message.reply_text(maintModeMsg)
     logging.info('[COMPLETE] /documentation:{}' .format(chatId))
 
 
@@ -751,8 +726,6 @@ def getShortCuts(update, context):
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /socials')
             logging.info('[RESPONSE] /shortcuts:{} usage: /shortcuts' .format(chatId))
-    else:
-        update.message.reply_text(maintModeMsg)
     logging.info('[COMPLETE] /shortcuts:{}' .format(chatId))
 
 
@@ -780,8 +753,6 @@ def getListings(update, context):
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /listings')
             logging.info('[RESPONSE] /listings:{} usage: /listings' .format(chatId))
-    else:
-        update.message.reply_text(maintModeMsg)
     logging.info('[COMPLETE] /listings:{}' .format(chatId))
 
 
@@ -800,14 +771,23 @@ def getStatus(update, context):
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /status')
             logging.info('[RESPONSE] /status:{} usage: /status' .format(chatId))
-    else:
-        update.message.reply_text(maintModeMsg)
     logging.info('[COMPLETE] /status:{}' .format(chatId))
+
+
+# Developer Application
+def getApply(update, context):
+    chatId = update.message.chat_id
+    logging.info('[STARTING] /apply:{}' .format(chatId))
+    if (getMaintMode(update, context) == False):
+        logging.info('[RESPONSE] /apply:{}' .format(chatId))
+        update.message.reply_text(apply)
+    logging.info('[COMPLETE] /apply:{}' .format(chatId))
 
 
 
 ###############################################
 #######     LIVECOINWATCH  FUNCTIONS    #######
+
 
 # LiveCoinWatch Fetch
 def getLiveCoinWatch(update, context):
@@ -815,14 +795,52 @@ def getLiveCoinWatch(update, context):
     logging.info('[STARTING] /lcwquery:{}' .format(chatId))
     if (getMaintMode(update, context) == False):
         logging.info('[LCWQUERY] /lcwquery:{} {}' .format(chatId, lcwUrl))
+
+
+        if (chatId > 0):
+            logging.info('[DATABASE] /myfiat:{} view fiat set in database' .format(chatId))
+            try:
+                connection = sqlite3.connect("map.db")
+                cursor = connection.cursor()
+                row = cursor.execute(
+                    "SELECT currency FROM users WHERE chat_id = ?",
+                    (chatId,),
+                ).fetchone()
+                if (row == None):
+                    #update.message.reply_text('No address set. Use /setmyaddress <address> first')
+                    currency = 'USD'
+                    logging.info('[RESPONSE] /myfiat:{} public chat, using USD' .format(chatId))
+                else:
+                    #update.message.reply_text('Fiat: {} (use /setmyfiat <FIAT> to use a different base fiat currency' .format(row[0]))
+                    currency = row[0]
+                    logging.info('[RESPONSE] /myfiat:{} fiat: {}' .format(chatId, currency))
+            except (IndexError, ValueError):
+                #update.message.reply_text('Usage: /myfiat')
+                currency = 'USD'
+                logging.info('[RESPONSE] /myfiat:{} invalid fiat {}' .format(chatId, currency))
+        else:
+            #update.message.reply_text(privateMsg)
+            currency = 'USD'
+            logging.info('[RESPONSE] /myfiat:{} {}' .format(chatId, privateMsg))
+
+        #fiatSymbol = cursor.execute(
+        #    "SELECT fiats.symbol FROM users LEFT JOIN fiats ON users.currency = fiats.code WHERE users.chat_id = ?",
+        #    (chatId),
+        #).fetchone()
+        #if (fiatSymbol == None):
+        #    symbol = '$'
+        #else:
+        #    symbol = fiatSymbol[0]
+        #connection.close()
+
         payload = json.dumps({
-            "currency": "USD",
+            "currency": currency,
             "code": "GLQ",
             "meta": True
         })
         headers = {
             'content-type': 'application/json',
-            'x-api-key': 'e445bbe9-5a54-4925-a17f-dfb4c36a09fa'
+            'x-api-key': str(lcwApiKey)
         }
         respPost = requests.request("POST", lcwUrl, headers=headers, data=payload)
         respJson = json.loads(respPost.text)
@@ -834,28 +852,54 @@ def getLiveCoinWatch(update, context):
         vol = ("{:,}".format(volRaw)).strip()
         ath = ("{:.6f}".format(athRaw))
         mcap = ("{:,}".format(mcapRaw))
-        response = "Price: ${}\nVolume: ${}\nATH: ${}\nMcap: ${}"
-        logging.info('[RESPONSE] /lcwquery:{} Price: ${} Volume: ${} ATH: ${} Mcap: ${}' .format(chatId, rate, vol, ath, mcap))
+        #response = "Price: ${}\nVolume: ${}\nATH: ${}\nMcap: ${}"
+        logging.info('[RESPONSE] /lcwquery:{} Price: {} Volume: {} ATH: {} Mcap: {}' .format(chatId, rate, vol, ath, mcap))
         logging.info('[COMPLETE] /lcwquery:{}' .format(chatId))
         return respJson
-    else:
-        update.message.reply_text(maintModeMsg)
     logging.info('[COMPLETE] /lcwquery:{}' .format(chatId))
 
 
 # LiveCoinWatch Fiats
-#def liveCoinWatchFiats:
-#    ...
+def liveCoinWatchFiats(update, context):
+    chatId = update.message.chat_id
+    logging.info('[STARTING] /lcwfiats:{}' .format(chatId))
+    if (getMaintMode(update, context) == False):
+        logging.info('[LCWQUERY] /lcwfiats:{} {}' .format(chatId, lcwFiatsUrl))
+        payload = '{}'
+        headers = {
+            'content-type': 'application/json',
+            'x-api-key': lcwApiKey
+        }
+        respPost = requests.request("POST", lcwFiatsUrl, headers=headers, data=payload)
+        respJson = json.loads(respPost.text)
+        response = "Data Fetched"
+        logging.info('[RESPONSE] /lcwfiats:{} {}' .format(chatId, response))
+        logging.info('[COMPLETE] /lcfiats:{}' .format(chatId))
+        return respJson
+    logging.info('[COMPLETE] /lcwfiats:{}' .format(chatId))
+
+
+# Local Fiats with Synbol
+def localLiveCoinWatchFiats():
+    # does not need to check maint mode
+    # because any function that can call this has already done so
+    connection = sqlite3.connect("map.db")
+    cursor = connection.cursor()
+    localFiats = cursor.execute("SELECT * FROM fiats").fetchall()
+    connection.close()
+    return localFiats
 
 
 
 ###############################################
 ########     MAINTENANCE  FUNCTIONS    ########
 
+
 # Check if maintenance mode is enabled.
 def getMaintMode(update, context):
     chatId = update.message.chat_id
     if (maintMode == 1) and (chatId != allowedAdmin):
+        update.message.reply_text(maintModeMsg)
         return True
     else:
         return False
@@ -868,13 +912,14 @@ def logMaintMode():
         logging.warning('[USERMODE] Admin: {}'.format(allowedAdmin))
         return
     else:
-        logging.warning('[USERMODE] {}' .format(maintModeLogMsgOff))
+        logging.info('[USERMODE] {}' .format(maintModeLogMsgOff))
         return
 
 
 
 ###############################################
 ############     MAIN FUNCTIONS    ############
+
 
 # Main
 def main():
@@ -891,6 +936,7 @@ def main():
 
     # Private Routes Set
     dp.add_handler(CommandHandler("setaddress", setMyAddress))
+    dp.add_handler(CommandHandler("setfiat", setMyFiat))
 
     # Private Routes Get
     dp.add_handler(CommandHandler("myaddress", getMyAddress))
@@ -898,16 +944,21 @@ def main():
     dp.add_handler(CommandHandler("myrank", getMyRank))
     dp.add_handler(CommandHandler("mytier", getMyTier))
     dp.add_handler(CommandHandler("myrewards", getMyRewards))
+    dp.add_handler(CommandHandler("myfiat", getMyFiat))
 
-    # Public Routes
+    # Public Staking Routes
     dp.add_handler(CommandHandler("apy", getApy))
+    dp.add_handler(CommandHandler("top", getTop))
+    dp.add_handler(CommandHandler("tiers", getTiers))
+    dp.add_handler(CommandHandler("totalstaked", getTotalStaked))
+    dp.add_handler(CommandHandler("totalstakers", getTotalStakers))
+
+    # Prices
     dp.add_handler(CommandHandler("price", getPrice))
     dp.add_handler(CommandHandler("pricedata", getPriceData))
     dp.add_handler(CommandHandler("pricedatafull", getPriceDataFull))
-    dp.add_handler(CommandHandler("tiers", getTiers))
-    dp.add_handler(CommandHandler("top", getTop))
-    dp.add_handler(CommandHandler("totalstaked", getTotalStaked))
-    dp.add_handler(CommandHandler("totalstakers", getTotalStakers))
+
+    # Messages
     dp.add_handler(CommandHandler("websites", getWebsites))
     dp.add_handler(CommandHandler("socials", getSocials))
     dp.add_handler(CommandHandler("staking", getStaking))
@@ -915,6 +966,7 @@ def main():
     dp.add_handler(CommandHandler("shortcuts", getShortCuts))
     dp.add_handler(CommandHandler("listings", getListings))
     dp.add_handler(CommandHandler("status", getStatus))
+    dp.add_handler(CommandHandler("apply", getApply))
 
     # Legacy Routes
     dp.add_handler(CommandHandler("address", getMyAddress))
@@ -938,6 +990,7 @@ def main():
     dp.add_handler(CommandHandler("buy", getListings))
     dp.add_handler(CommandHandler("exchanges", getListings))
     dp.add_handler(CommandHandler("setmyaddress", setMyAddress))
+    dp.add_handler(CommandHandler("setmyfiat", setMyFiat))
 
     # Start Polling
     logging.info('[USERMODE] Starting Scheduler')
