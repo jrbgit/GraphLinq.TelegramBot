@@ -22,7 +22,7 @@ from eth_utils.address import is_address
 from config_logging import (logging)
 from config_maint import (maint_mode, maint_mode_msg, allowed_admin, maint_mode_log_msg_on,
     maint_mode_log_msg_off)
-from config_msgs import (start_msg, help_msg, help_msg_private, help_msg_public,
+from config_msgs import (start_msg, help_msg_private, help_msg_public,
     private_msg, websites, socials, staking, shortcuts, cex_listings, dex_listings,status,
     set_address_msg,apply)
 from config_base import (lcw_url,lcw_fiats_url,telegram,lcw_api_key)
@@ -37,8 +37,8 @@ def start(update, context):
         try:
             table = PrettyTable()
             table.field_names = ["GraphLinq Telegram Bot v1.1"]
-            for start in start_msg:
-                table.add_row(start)
+            for starts in start_msg:
+                table.add_row(starts)
             response = '```\n{}```'.format(table.get_string())
             update.message.reply_text(response, parse_mode='Markdown')
             logging.info('[RESPONSE] /start:{} sent: /start' .format(update.message.chat_id))
@@ -79,32 +79,42 @@ def set_my_address(update, context):
         try:
             my_address = context.args[0]
             if is_address(my_address):
-                logging.info('[STARTING] /setmyaddress:{} valid address'.format(update.message.chat_id))
+                logging.info('[STARTING] /setmyaddress:{} valid address'
+                                .format(update.message.chat_id))
                 connection = sqlite3.connect("bot.db")
                 cursor = connection.cursor()
-                cursor.execute("SELECT address FROM users WHERE chat_id = ?", (update.message.chat_id,))
+                cursor.execute("SELECT address FROM users WHERE chat_id = ?",
+                            (update.message.chat_id,))
                 row = cursor.fetchone()
                 if row is None:
-                    logging.info('[DATABASE] /setmyaddress:{} insert address into database'.format(update.message.chat_id))
-                    cursor.execute("INSERT INTO users (chat_id, address) VALUES (?, ?)", (update.message.chat_id, my_address,))
+                    logging.info('[DATABASE] /setmyaddress:{} insert address into database'
+                            .format(update.message.chat_id))
+                    cursor.execute("INSERT INTO users (chat_id, address) VALUES (?, ?)",(
+                        update.message.chat_id, my_address,))
                     connection.commit()
                     update.message.reply_text('New address set: {}'.format(my_address))
-                    logging.info('[DATABASE] /setaddress:{} record {} added'.format(update.message.chat_id, my_address))
+                    logging.info('[DATABASE] /setaddress:{} record {} added'.format(
+                        update.message.chat_id, my_address))
                 else:
                     if row[0] == my_address:
                         update.message.reply_text('Address is the same...')
-                        logging.info('[RESPONSE] /setmyaddress:{} address is the same...'.format(update.message.chat_id))
+                        logging.info('[RESPONSE] /setmyaddress:{} address is the same...'.format(
+                            update.message.chat_id))
                     else:
-                        cursor.execute("UPDATE users SET address = ? WHERE chat_id = ?", (my_address, update.message.chat_id,))
+                        cursor.execute("UPDATE users SET address = ? WHERE chat_id = ?", (
+                            my_address, update.message.chat_id,))
                         connection.commit()
                         update.message.reply_text('Updated address to: {}'.format(my_address))
-                        logging.info('[RESPONSE] /setmyaddress:{} address changed to {}'.format(update.message.chat_id, my_address))
+                        logging.info('[RESPONSE] /setmyaddress:{} address changed to {}'.format(
+                            update.message.chat_id, my_address))
                 connection.close()
             else:
                 update.message.reply_text('Invalid address...')
-                logging.info('[RESPONSE] /setmyaddress:{} invalid address {}'.format(update.message.chat_id, my_address))
+                logging.info('[RESPONSE] /setmyaddress:{} invalid address {}'.format(
+                    update.message.chat_id, my_address))
         except (IndexError, ValueError):
-            logging.warning('[TRYERROR] /setmyaddress:{} please provide your address...'.format(update.message.chat_id))
+            logging.warning('[TRYERROR] /setmyaddress:{} please provide your address...'.format(
+                update.message.chat_id))
             update.message.reply_text('Please provide your address...')
     logging.info('[COMPLETE] /setmyaddress:{}'.format(update.message.chat_id))
 
@@ -120,7 +130,8 @@ def get_my_address(update, context):
             try:
                 connection = sqlite3.connect("bot.db")
                 cursor = connection.cursor()
-                cursor.execute("SELECT address FROM users WHERE chat_id = ?",(update.message.chat_id,))
+                cursor.execute("SELECT address FROM users WHERE chat_id = ?",(
+                    update.message.chat_id,))
                 row = cursor.fetchone()
                 if row is None:
                     update.message.reply_text('No address found. Use /setmyaddress first')
@@ -319,7 +330,7 @@ def get_my_total(update, context):
                                     .format(update.message.chat_id))
                 except (IndexError, ValueError):
                     update.message.reply_text('Usage: /total after you /set your address')
-                    logging.warning('[TRYERROR] /mytotal:{} Usage: /total after you /set your address'
+                    logging.warning('[TRYERROR] /mytotal:{} Usage: /total after /set'
                                 .format(update.message.chat_id))
         else:
             update.message.reply_text(private_msg)
@@ -349,38 +360,6 @@ def get_apy(update, context):
         logging.info('[RESPONSE] /apy:{} Tier 1: {}% Tier 2: {}% Tier 3: {}%'
                     .format(update.message.chat_id, tiers_apy[0], tiers_apy[1], tiers_apy[2]))
     logging.info('[COMPLETE] /apy:{}' .format(update.message.chat_id))
-
-def get_price(update, context):
-    """Price from LCW"""
-    logging.info('[STARTING] /price:{}' .format(update.message.chat_id))
-    if get_maint_mode(update, context) is False:
-        logging.info('[LCWQUERY] /price:{} {}' .format(update.message.chat_id, lcw_url))
-        data = get_live_coin_watch(update, context)
-        symbol = "$"
-        rate = data["rate"]
-        price = ("{:.6f}".format(rate))
-        text = "Price: {} {}"
-        update.message.reply_text(text .format(symbol, price))
-        logging.info('[RESPONSE] /price:{} {} {}' .format(update.message.chat_id, symbol, price))
-    logging.info('[COMPLETE] /price:{}' .format(update.message.chat_id))
-
-def get_price_data(update, context):
-    """Price with meta data from LCW"""
-    logging.info('[STARTING] /pricedata:{}' .format(update.message.chat_id))
-    if get_maint_mode(update, context) is False:
-        logging.info('[LCWQUERY] /pricedata:{} {}' .format(update.message.chat_id, lcw_url))
-        response = get_live_coin_watch(update, context)
-        table = PrettyTable()
-        table.align = "l"
-        table.field_names("Metric", "Value")
-        table.add_row("Rate", ("{:.6f}".format(response["rate"])))
-        table.add_row("Volume", ("{:,}".format(response["volume"])))
-        table.add_row("ATH", ("{:.6f}".format(response["allTimeHighUSD"])))
-        table.add_row("MCAP", ("{:,}".format(response["cap"])))
-        response = '```\n{}```'.format(table.get_string())
-        update.message.reply_text(response, parse_mode='Markdown')
-        logging.info('[RESPONSE] /pricedata:{} Sent PriceData'.format(update.message.chat_id))
-    logging.info('[COMPLETE] /pricedata:{}' .format(update.message.chat_id))
 
 def get_tiers(update, context):
     """Get Tiers"""
@@ -445,8 +424,8 @@ def get_top(update, context):
         tops = contract.functions.getTopStakers().call()
         response = get_live_coin_watch(update, context)
         formatted_top_three = format_top_stakers(tops)
-        formatted_values = format_staker_values(tops, response["rate"])
-        send_top_stakers_response(update, formatted_top_three, formatted_values, context, response["rate"])
+        formatted_values = format_staker_values(tops)
+        send_top_stakers_response(update, formatted_top_three, formatted_values, response["rate"])
         logging.info('[RESPONSE] /top:{}' .format(update.message.chat_id))
     logging.info('[COMPLETE] /top:{}' .format(update.message.chat_id))
 
@@ -462,7 +441,7 @@ def format_top_stakers(tops):
     ]
     return formatted_top_three
 
-def format_staker_values(tops, rate):
+def format_staker_values(tops):
     """Format staker values"""
     unformatted_values = [
         web3.fromWei(top, 'ether') for top in tops[1][:3]
@@ -471,20 +450,20 @@ def format_staker_values(tops, rate):
     formatted_values = [float(value) for value in formatted_values]
     return formatted_values
 
-def send_top_stakers_response(update, formatted_top_three, formatted_values, context, rate):
+def send_top_stakers_response(update, formatted_top_three, formatted_values, rate):
     """Send response for top stakers"""
     message = "Top Stakers:\n"
     table = PrettyTable()
     table.align = "r"
-    table.field_names = ['#','Wallet','Staked','Value']
-    for i in range(len(formatted_values)):
-        address = formatted_top_three[i]
-        value = int(formatted_values[i])
+    table.field_names = ['#', 'Wallet', 'Staked', 'Value']
+    for i, value in enumerate(formatted_values, start=1):
+        address = formatted_top_three[i - 1]
+        value = int(value)
         estimated_value = value * rate
         formatted_value = "{:,}".format(value)
         formatted_estimated_value = "${:,.2f}".format(estimated_value)
-        message += f"{i+1}: {address} ({formatted_value}, {formatted_estimated_value})\n"
-        table.add_row([i + 1, address, formatted_value, formatted_estimated_value])
+        message += f"{i}: {address} ({formatted_value}, {formatted_estimated_value})\n"
+        table.add_row([i, address, formatted_value, formatted_estimated_value])
     response = '```\n{}```'.format(table.get_string())
     update.message.reply_text(response, parse_mode='Markdown')
 
@@ -525,7 +504,6 @@ def get_total_stakers(update, context):
         logging.info('[CONTRACT] /totalstakers:{} getTotalStakers' .format(update.message.chat_id))
         try:
             user_total = contract.functions.getTotalStakers().call()
-            text = 'Stakers: {}'
             table = PrettyTable()
             table.field_names = ['Total Stakers']
             table.add_row([user_total])
@@ -687,35 +665,6 @@ def get_live_coin_watch(update, context):
     logging.info('[STARTING] /lcwquery:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         logging.info('[LCWQUERY] /lcwquery:{} {}' .format(update.message.chat_id, lcw_url))
-        #if update.message.chat_id > 0:
-            #logging.info('[DATABASE] /myfiat:{} view fiat set in database' .format(
-            #    update.message.chat_id))
-            #try:
-            #    connection = sqlite3.connect("bot.db")
-            #    cursor = connection.cursor()
-            #    row = cursor.execute(
-            #        "SELECT currency FROM users WHERE chat_id = ?",
-            #        (update.message.chat_id,),
-            #    ).fetchone()
-            #    if row is None:
-            #        #update.message.reply_text('No address set. Use /setmyaddress <address> first')
-            #        currency = 'USD'
-            #        logging.info('[RESPONSE] /myfiat:{} public chat, using USD' .format(
-            #            update.message.chat_id))
-            #    else:
-            #        #update.message.reply_text('Fiat: {} (use /setmyfiat <FIAT>' .format(row[0]))
-            #        currency = row[0]
-            #        logging.info('[RESPONSE] /myfiat:{} fiat: {}' .format(
-            #            update.message.chat_id, currency))
-            #except (IndexError, ValueError):
-            #    #update.message.reply_text('Usage: /myfiat')
-            #    currency = 'USD'
-            #    logging.info('[RESPONSE] /myfiat:{} invalid fiat {}' .format(
-            #        update.message.chat_id, currency))
-        #else:
-            #update.message.reply_text(privateMsg)
-            #currency = 'USD'
-            #logging.info('[RESPONSE] /myfiat:{} {}' .format(update.message.chat_id, private_msg))
         payload = json.dumps({
             "currency": 'USD',
             "code": "GLQ",
@@ -761,33 +710,6 @@ def local_live_coin_watch_fiats():
     local_fiats = cursor.execute("SELECT * FROM fiats").fetchall()
     connection.close()
     return local_fiats
-
-def get_convert(update, context):
-    """Covert to Local Currency"""
-    logging.info('[STARTING] /convert:{}' .format(update.message.chat_id))
-    if get_maint_mode(update, context) is False:
-        #glqAmmount = float(context.args[0])
-        # need to check, is number, is positive, and is set
-        #try
-        #    if(glqAmmount):
-        #        print("We have something set for 0")
-        #        logging.info('[LCWQUERY] /convert:{} {}' .format(update.message.chat_id, lcwUrl))
-        #        data = getLiveCoinWatch(update, context)
-        #        symbol = "$"
-        #        rate = float(data["rate"])
-        #        price = ("{:.8f}".format(rate))
-        #        text = "Value: {}{}"
-        #        converted = rate * glqAmmount
-        #        update.message.reply_text(text .format(symbol, converted))
-        #        logging.info('[RESPONSE] /convert:{} {}{}' .format(update.message.chat_id,
-        # symbol, converted))
-        #    else:
-        #        print("You need to pass in a value")
-        #        update.message.reply_text("Please pass in value!")
-        #except (IndexError, ValueError):
-        update.message.reply_text("function unavailable!")
-        print("Function Unavailable")
-    logging.info('[COMPLETE] /convert:{}' .format(update.message.chat_id))
 
 ########     MAINTENANCE  FUNCTIONS    ########
 
