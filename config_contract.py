@@ -13,8 +13,8 @@ Description     : Contract Config - Telegram bot for GraphLinq
 
 # Network to connect to like infura
 import logging
-from web3 import Web3
 import json
+from web3 import Web3
 
 # Network connection to your node or an infura like service
 network_url = 'https://glq-dataseed.graphlinq.io/'

@@ -11,7 +11,6 @@ Version         : 1.1
 Description     : Maint Config - Telegram bot for GraphLinq
 """
 
-import logging
 # Maintenance Mode 0 = Off, 1 = On
 maint_mode = 0
 

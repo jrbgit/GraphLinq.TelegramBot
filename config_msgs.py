@@ -12,8 +12,6 @@ Version         : 1.1
 Description     : Msgs Config - Telegram bot for GraphLinq
 """
 
-import logging
-
 # /start
 start_msg = [
     ['Welcome to the GraphLinq Telegram Bot.'],
@@ -21,7 +19,7 @@ start_msg = [
 ]
 
 # /setaddress
-set_address_msg = 'You must first use the /setaddress command to store your address. example: /set 0xYourAddressGoesHere'
+set_address_msg = 'First use /setmyaddress to store your address.'
 
 # /help
 help_msg = [
@@ -55,7 +53,7 @@ help_msg_public = [
 ]
 
 # Private Command Response In Public Chat
-private_msg = 'This is a private command. Please interact directly with me by clicking here @GraphLinqBot'
+private_msg = 'This is a private command. Please interact directly with me here @GraphLinqBot'
 
 # /websites
 websites = [
