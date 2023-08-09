@@ -343,6 +343,7 @@ def get_apy(update, context):
     """APYs"""
     logging.info('[STARTING] /apy:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
+        update.message.reply_text('Fetching Data...')
         logging.info('[CONTRACT] /apy:{} getTiersAPY' .format(update.message.chat_id))
         apys = contract.functions.getTiersAPY().call()
         tiers_apy = [web3.fromWei(apy, 'ether') for apy in apys]
@@ -365,6 +366,7 @@ def get_tiers(update, context):
     """Get Tiers"""
     logging.info('[STARTING] /tiers:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
+        update.message.reply_text('Fetching Data...')
         tier_totals = get_tier_totals()
         formatted_tiers = format_tiers(tier_totals)
         send_tiers_response(update, formatted_tiers)
@@ -421,6 +423,7 @@ def get_top(update, context):
     """Top Stakers"""
     logging.info('[STARTING] /top:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
+        update.message.reply_text('Fetching Data...')
         tops = contract.functions.getTopStakers().call()
         response = get_live_coin_watch(update, context)
         formatted_top_three = format_top_stakers(tops)
@@ -472,6 +475,7 @@ def get_total_staked(update, context):
     logging.info('[STARTING] /totalstaked:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         logging.info('[LCWQUERY] /totalstaked:{} {}' .format(update.message.chat_id, lcw_url))
+        update.message.reply_text('Fetching Data...')
         try:
             response = get_live_coin_watch(update, context)
             rate = response["rate"]
@@ -502,6 +506,7 @@ def get_total_stakers(update, context):
     logging.info('[STARTING] /totalstakers:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         logging.info('[CONTRACT] /totalstakers:{} getTotalStakers' .format(update.message.chat_id))
+        update.message.reply_text('Fetching Data...')
         try:
             user_total = contract.functions.getTotalStakers().call()
             table = PrettyTable()
@@ -524,13 +529,10 @@ def get_websites(update, context):
     logging.info('[STARTING] /websites:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         try:
-            table = PrettyTable()
-            table.align = "l"
-            table.field_names = ["Name", "URL"]
+            response = ''
             for website in websites:
-                table.add_row(website)
-            response = '```\n{}```'.format(table.get_string())
-            update.message.reply_text(response, parse_mode='Markdown')
+                response += website[0] + ' : ' + website[1] + '\n'
+            update.message.reply_text(response)
             logging.info('[RESPONSE] /websites:{} sent websites' .format(update.message.chat_id))
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /websites')
@@ -543,13 +545,10 @@ def get_socials(update, context):
     logging.info('[STARTING] /socials:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         try:
-            table = PrettyTable()
-            table.align = "l"
-            table.field_names = ["Name", "URL"]
+            response = ''
             for social in socials:
-                table.add_row(social)
-            response = '```\n{}```'.format(table.get_string())
-            update.message.reply_text(response, parse_mode='Markdown')
+                response += social[0] + ' : ' + social[1] + '\n'
+            update.message.reply_text(response)
             logging.info('[RESPONSE] /socials:{} sent socials' .format(update.message.chat_id))
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /socials')
@@ -561,13 +560,10 @@ def get_staking(update, context):
     logging.info('[STARTING] /staking:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         try:
-            table = PrettyTable()
-            table.align = "l"
-            table.field_names = ["Name", "URL"]
+            response = ''
             for stake in staking:
-                table.add_row(stake)
-            response = '```\n{}```'.format(table.get_string())
-            update.message.reply_text(response, parse_mode='Markdown')
+                response += stake[0] + ' : ' + stake[1] + '\n'
+            update.message.reply_text(response)
             logging.info('[RESPONSE] /staking:{} sent staking' .format(update.message.chat_id))
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /staking')
@@ -579,11 +575,8 @@ def get_documentation(update, context):
     logging.info('[STARTING] /documentation:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         try:
-            table = PrettyTable()
-            table.field_names = ['Site', 'Link']
-            table.add_row(['Docs', 'https://glq.link/docs'])
-            response = '```\n{}```'.format(table.get_string())
-            update.message.reply_text(response, parse_mode='Markdown')
+            response = 'Docs : https://glq.link/docs'
+            update.message.reply_text(response)
             logging.info('[RESPONSE] /documentation:{} sent documentation' .format(
                 update.message.chat_id))
         except (IndexError, ValueError):
@@ -616,15 +609,12 @@ def get_listings(update, context):
     logging.info('[STARTING] /listings:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         try:
-            table = PrettyTable()
-            table.align = "l"
-            table.field_names = ["Name", "Pair", "URL"]
+            response = ''
             for cex_listing in cex_listings:
-                table.add_row(cex_listing)
+                response += cex_listing[0] + ' : ' + cex_listing[1] + ' : ' + cex_listing[2] +'\n'
             for dex_listing in dex_listings:
-                table.add_row(dex_listing)
-            response = '```\n{}```'.format(table.get_string())
-            update.message.reply_text(response, parse_mode='Markdown')
+                response += dex_listing[0] + ' : ' + dex_listing[1] + ' : ' + dex_listing[2] +'\n'
+            update.message.reply_text(response)
             logging.info('[RESPONSE] /listings:{} sent listings' .format(update.message.chat_id))
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /listings')
@@ -637,13 +627,10 @@ def get_status(update, context):
     logging.info('[STARTING] /status:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         try:
-            table = PrettyTable()
-            table.align = "l"
-            table.field_names = ["Name", "URL"]
+            response = ''
             for stat in status:
-                table.add_row(stat)
-            response = '```\n{}```'.format(table.get_string())
-            update.message.reply_text(response, parse_mode='Markdown')
+                response += stat[0] + ' : ' + stat[1] + '\n'
+            update.message.reply_text(response)
             logging.info('[RESPONSE] /status:{} sent status' .format(update.message.chat_id))
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /status')
