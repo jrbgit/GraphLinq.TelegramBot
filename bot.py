@@ -343,7 +343,6 @@ def get_apy(update, context):
     """APYs"""
     logging.info('[STARTING] /apy:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
-        update.message.reply_text('Fetching Data...')
         logging.info('[CONTRACT] /apy:{} getTiersAPY' .format(update.message.chat_id))
         apys = contract.functions.getTiersAPY().call()
         tiers_apy = [web3.fromWei(apy, 'ether') for apy in apys]
@@ -366,7 +365,6 @@ def get_tiers(update, context):
     """Get Tiers"""
     logging.info('[STARTING] /tiers:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
-        update.message.reply_text('Fetching Data...')
         tier_totals = get_tier_totals()
         formatted_tiers = format_tiers(tier_totals)
         send_tiers_response(update, formatted_tiers)
@@ -423,7 +421,6 @@ def get_top(update, context):
     """Top Stakers"""
     logging.info('[STARTING] /top:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
-        update.message.reply_text('Fetching Data...')
         tops = contract.functions.getTopStakers().call()
         response = get_live_coin_watch(update, context)
         formatted_top_three = format_top_stakers(tops)
@@ -475,7 +472,6 @@ def get_total_staked(update, context):
     logging.info('[STARTING] /totalstaked:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         logging.info('[LCWQUERY] /totalstaked:{} {}' .format(update.message.chat_id, lcw_url))
-        update.message.reply_text('Fetching Data...')
         try:
             response = get_live_coin_watch(update, context)
             rate = response["rate"]
@@ -506,7 +502,6 @@ def get_total_stakers(update, context):
     logging.info('[STARTING] /totalstakers:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         logging.info('[CONTRACT] /totalstakers:{} getTotalStakers' .format(update.message.chat_id))
-        update.message.reply_text('Fetching Data...')
         try:
             user_total = contract.functions.getTotalStakers().call()
             table = PrettyTable()
