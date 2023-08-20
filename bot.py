@@ -13,26 +13,30 @@ Description     : Telegram bot for GraphLinq
 
 # Main Import Block
 import re
+import time
 import json
 import sqlite3
 import requests
 from prettytable import PrettyTable
 from telegram.ext import Updater, CommandHandler
 from eth_utils.address import is_address
-from config_logging import (logging)
+from config_logging import (logging, log_formats, log_info, log_warning, log_debug,
+                            log_error, log_critical)
 from config_maint import (maint_mode, maint_mode_msg, allowed_admin, maint_mode_log_msg_on,
     maint_mode_log_msg_off)
-from config_msgs import (start_msg, help_msg_private, help_msg_public,
+from config_msgs import (version_msg, sheduler_start_msg,start_msg, help_msg_private, help_msg_public,
     private_msg, websites, socials, staking, shortcuts, cex_listings, dex_listings,status,
     set_address_msg,apply)
-from config_base import (lcw_url,lcw_fiats_url,telegram,lcw_api_key)
+from config_base import (bot_version, lcw_url,lcw_fiats_url,telegram,lcw_api_key)
 from config_contract import (contract, web3)
+from web3.exceptions import ContractLogicError
+from requests.exceptions import RequestException
 
 ##########     INITIAL  FUNCTIONS    ##########
 
 def start(update, context):
     """Start the Bot when user first interacts with the bot"""
-    logging.info('[STARTING] /start:{}' .format(update.message.chat_id))
+    log_debug('[STARTING] /start:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         try:
             table = PrettyTable()
@@ -41,15 +45,15 @@ def start(update, context):
                 table.add_row(starts)
             response = '```\n{}```'.format(table.get_string())
             update.message.reply_text(response, parse_mode='Markdown')
-            logging.info('[RESPONSE] /start:{} sent: /start' .format(update.message.chat_id))
+            log_debug('[RESPONSE] /start:{} sent: /start' .format(update.message.chat_id))
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /start')
-            logging.warning('[TRYERROR] /start:{} usage: /start' .format(update.message.chat_id))
-    logging.info('[COMPLETE] /start:{}' .format(update.message.chat_id))
+            log_warning('[TRYERROR] /start:{} usage: /start' .format(update.message.chat_id))
+    log_debug('[COMPLETE] /start:{}' .format(update.message.chat_id))
 
 def get_help(update, context):
     """Help menu"""
-    logging.info('[STARTING] /help:{}' .format(update.message.chat_id))
+    log_debug('[STARTING] /help:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         try:
             table = PrettyTable()
@@ -66,20 +70,20 @@ def get_help(update, context):
             update.message.reply_text(response, parse_mode='Markdown')
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /help')
-            logging.warning('[TRYERROR] /help:{} usage: /help' .format(update.message.chat_id))
-    logging.info('[COMPLETE] /help:{}' .format(update.message.chat_id))
+            log_warning('[TRYERROR] /help:{} usage: /help' .format(update.message.chat_id))
+    log_debug('[COMPLETE] /help:{}' .format(update.message.chat_id))
 
 ###########     SETTER FUNCTIONS    ###########
 
 def set_my_address(update, context):
     """Set My Address"""
-    logging.info('[STARTING] /setmyaddress:{}'.format(update.message.chat_id))
+    log_debug('[STARTING] /setmyaddress:{}'.format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
-        logging.info('[DATABASE] /setmyaddress:{} lookup user'.format(update.message.chat_id))
+        log_debug('[DATABASE] /setmyaddress:{} lookup user'.format(update.message.chat_id))
         try:
             my_address = context.args[0]
             if is_address(my_address):
-                logging.info('[STARTING] /setmyaddress:{} valid address'
+                log_debug('[STARTING] /setmyaddress:{} valid address'
                                 .format(update.message.chat_id))
                 connection = sqlite3.connect("bot.db")
                 cursor = connection.cursor()
@@ -87,45 +91,45 @@ def set_my_address(update, context):
                             (update.message.chat_id,))
                 row = cursor.fetchone()
                 if row is None:
-                    logging.info('[DATABASE] /setmyaddress:{} insert address into database'
+                    log_debug('[DATABASE] /setmyaddress:{} insert address into database'
                             .format(update.message.chat_id))
                     cursor.execute("INSERT INTO users (chat_id, address) VALUES (?, ?)",(
                         update.message.chat_id, my_address,))
                     connection.commit()
                     update.message.reply_text('New address set: {}'.format(my_address))
-                    logging.info('[DATABASE] /setaddress:{} record {} added'.format(
+                    log_debug('[DATABASE] /setaddress:{} record {} added'.format(
                         update.message.chat_id, my_address))
                 else:
                     if row[0] == my_address:
                         update.message.reply_text('Address is the same...')
-                        logging.info('[RESPONSE] /setmyaddress:{} address is the same...'.format(
+                        log_debug('[RESPONSE] /setmyaddress:{} address is the same...'.format(
                             update.message.chat_id))
                     else:
                         cursor.execute("UPDATE users SET address = ? WHERE chat_id = ?", (
                             my_address, update.message.chat_id,))
                         connection.commit()
                         update.message.reply_text('Updated address to: {}'.format(my_address))
-                        logging.info('[RESPONSE] /setmyaddress:{} address changed to {}'.format(
+                        log_debug('[RESPONSE] /setmyaddress:{} address changed to {}'.format(
                             update.message.chat_id, my_address))
                 connection.close()
             else:
                 update.message.reply_text('Invalid address...')
-                logging.info('[RESPONSE] /setmyaddress:{} invalid address {}'.format(
+                log_debug('[RESPONSE] /setmyaddress:{} invalid address {}'.format(
                     update.message.chat_id, my_address))
         except (IndexError, ValueError):
-            logging.warning('[TRYERROR] /setmyaddress:{} please provide your address...'.format(
+            log_warning('[TRYERROR] /setmyaddress:{} please provide your address...'.format(
                 update.message.chat_id))
             update.message.reply_text('Please provide your address...')
-    logging.info('[COMPLETE] /setmyaddress:{}'.format(update.message.chat_id))
+    log_debug('[COMPLETE] /setmyaddress:{}'.format(update.message.chat_id))
 
 #########     MY GETTER FUNCTIONS    ##########
 
 def get_my_address(update, context):
     """Get My Address"""
-    logging.info('[STARTING] /myaddress:{}' .format(update.message.chat_id))
+    log_debug('[STARTING] /myaddress:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         if update.message.chat_id > 0:
-            logging.info('[DATABASE] /myaddress:{} lookup address' .format(
+            log_debug('[DATABASE] /myaddress:{} lookup address' .format(
                 update.message.chat_id))
             try:
                 connection = sqlite3.connect("bot.db")
@@ -135,28 +139,28 @@ def get_my_address(update, context):
                 row = cursor.fetchone()
                 if row is None:
                     update.message.reply_text('No address found. Use /setmyaddress first')
-                    logging.info('[RESPONSE] /myaddress:{} no address found' .format(
+                    log_debug('[RESPONSE] /myaddress:{} no address found' .format(
                         update.message.chat_id))
                 else:
                     update.message.reply_text('Address: {}'.format(row[0]))
-                    logging.info('[RESPONSE] /myaddress:{} db address: {}' .format(
+                    log_debug('[RESPONSE] /myaddress:{} db address: {}' .format(
                         update.message.chat_id, row[0]))
                 connection.close()
             except (IndexError, ValueError):
                 update.message.reply_text('Usage: /myaddress')
-                logging.warning('[TRYERROR] /myaddress:{} invalid address' .format(
+                log_warning('[TRYERROR] /myaddress:{} invalid address' .format(
                     update.message.chat_id))
         else:
             update.message.reply_text(private_msg)
-            logging.info('[RESPONSE] /myaddress:{} {}' .format(
+            log_debug('[RESPONSE] /myaddress:{} {}' .format(
                 update.message.chat_id, private_msg))
-    logging.info('[COMPLETE] /myaddress:{}' .format(update.message.chat_id))
+    log_debug('[COMPLETE] /myaddress:{}' .format(update.message.chat_id))
 
 def get_my_rank(update, context):
     """Get My Rank"""
-    logging.info('[STARTING] /myrank:{}' .format(update.message.chat_id))
+    log_debug('[STARTING] /myrank:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False and update.message.chat_id > 0:
-        logging.info('[DATABASE] /myrank:{} get address from database' .format(
+        log_debug('[DATABASE] /myrank:{} get address from database' .format(
             update.message.chat_id))
         connection = sqlite3.connect("bot.db")
         cursor = connection.cursor()
@@ -166,11 +170,11 @@ def get_my_rank(update, context):
         ).fetchone()
         if row is None:
             update.message.reply_text(set_address_msg)
-            logging.info('[DATABASE] /myrank:{} get address from database' .format(
+            log_debug('[DATABASE] /myrank:{} get address from database' .format(
                 update.message.chat_id))
         else:
             my_address = row[0]
-            logging.info('[DATABASE] /myrank:{} matched address {}' .format(
+            log_debug('[DATABASE] /myrank:{} matched address {}' .format(
                 update.message.chat_id, my_address))
             try:
                 if is_address(my_address):
@@ -178,32 +182,32 @@ def get_my_rank(update, context):
                     text = 'Rank: {}'
                     if user_total > 0:
                         update.message.reply_text(text .format(user_total))
-                        logging.info('[RESPONSE] /myrank:{} user {} is ranked {}'
+                        log_debug('[RESPONSE] /myrank:{} user {} is ranked {}'
                                     .format(update.message.chat_id, my_address, user_total))
                     else:
                         update.message.reply_text("This address does not have a rank.")
-                        logging.info('[RESPONSE] /myrank:{} user {} has no rank {}' .format(
+                        log_debug('[RESPONSE] /myrank:{} user {} has no rank {}' .format(
                             update.message.chat_id, my_address, user_total))
                     connection.close()
                 else:
                     update.message.reply_text('Address is invalid..')
-                    logging.info('[RESPONSE] /myrank:{} address is invalid...'
+                    log_debug('[RESPONSE] /myrank:{} address is invalid...'
                                 .format(update.message.chat_id))
             except (IndexError, ValueError):
                 update.message.reply_text('Usage: /myrank requires /setmyaddress')
-                logging.warning('[TRYERROR] /myrank:{} requires /setmyaddress'
+                log_warning('[TRYERROR] /myrank:{} requires /setmyaddress'
                             .format(update.message.chat_id))
     else:
         update.message.reply_text(private_msg)
-        logging.info('[RESPONSE] /myrank:{} {}'.format(update.message.chat_id, private_msg))
-    logging.info('[COMPLETE] /myrank:{}' .format(update.message.chat_id))
+        log_debug('[RESPONSE] /myrank:{} {}'.format(update.message.chat_id, private_msg))
+    log_debug('[COMPLETE] /myrank:{}' .format(update.message.chat_id))
 
 def get_my_rewards(update, context):
     """Get the user's rewards"""
-    logging.info('[STARTING] /myrewards:{}'.format(update.message.chat_id))
+    log_debug('[STARTING] /myrewards:{}'.format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         if update.message.chat_id > 0:
-            logging.info('[DATABASE] /myrewards:{} get address from database' .format(
+            log_debug('[DATABASE] /myrewards:{} get address from database' .format(
                 update.message.chat_id))
             connection = sqlite3.connect("bot.db")
             cursor = connection.cursor()
@@ -213,14 +217,14 @@ def get_my_rewards(update, context):
             ).fetchone()
             if row is None:
                 update.message.reply_text(set_address_msg)
-                logging.info('[DATABASE] /myrewards:{} no match'.format(update.message.chat_id))
+                log_debug('[DATABASE] /myrewards:{} no match'.format(update.message.chat_id))
             else:
                 my_address = row[0]
-                logging.info('[DATABASE] /myrewards:{} matched address {}' .format(
+                log_debug('[DATABASE] /myrewards:{} matched address {}' .format(
                     update.message.chat_id, my_address))
                 try:
                     if is_address(my_address):
-                        logging.info('[LCWQUERY] /myrewards:{} {}' .format(
+                        log_debug('[LCWQUERY] /myrewards:{} {}' .format(
                             update.message.chat_id, lcw_url))
                         response = get_live_coin_watch(update, context)
                         var9 = response["rate"]
@@ -231,28 +235,28 @@ def get_my_rewards(update, context):
                         f_total = ("{:,.2f}".format(u_total))
                         text = 'Unclaimed rewards: {} GLQ || Value ≈ ${}'
                         update.message.reply_text(text .format(eth_format, f_total))
-                        logging.info('[RESPONSE] /myrewards:{} user rewards {} ≈ {}'
+                        log_debug('[RESPONSE] /myrewards:{} user rewards {} ≈ {}'
                                     .format(update.message.chat_id, eth_format, f_total))
                         connection.close()
                     else:
-                        logging.warning('[RESPONSE] /myrewards:{} address is invalid...'
+                        log_warning('[RESPONSE] /myrewards:{} address is invalid...'
                                         .format(update.message.chat_id))
                         update.message.reply_text('Address is invalid..')
                 except (IndexError, ValueError):
                     update.message.reply_text('There are no rewards at this address.')
-                    logging.info('[TRYERROR] /myrewards:{} no rewards at this address'
+                    log_debug('[TRYERROR] /myrewards:{} no rewards at this address'
                                 .format(update.message.chat_id))
         else:
             update.message.reply_text(private_msg)
-            logging.info('[RESPONSE] {}'.format(private_msg))
-    logging.info('[COMPLETE] /myrewards:{}'.format(update.message.chat_id))
+            log_debug('[RESPONSE] {}'.format(private_msg))
+    log_debug('[COMPLETE] /myrewards:{}'.format(update.message.chat_id))
 
 def get_my_tier(update, context):
     """Get users tier"""
-    logging.info('[STARTING] /mytier:{}' .format(update.message.chat_id))
+    log_debug('[STARTING] /mytier:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         if update.message.chat_id > 0:
-            logging.info('[DATABASE] /mytier:{} get address from database' .format(
+            log_debug('[DATABASE] /mytier:{} get address from database' .format(
                 update.message.chat_id))
             connection = sqlite3.connect("bot.db")
             cursor = connection.cursor()
@@ -261,39 +265,39 @@ def get_my_tier(update, context):
                 (update.message.chat_id,),
             ).fetchone()
             if row is None:
-                logging.info('[DATABASE] /mytier:{} no match' .format(update.message.chat_id))
+                log_debug('[DATABASE] /mytier:{} no match' .format(update.message.chat_id))
                 update.message.reply_text('/setaddress must be set first.')
             else:
                 my_address = row[0]
-                logging.info('[DATABASE] /mytier:{} matched address {}'
+                log_debug('[DATABASE] /mytier:{} matched address {}'
                             .format(update.message.chat_id, my_address))
                 try:
                     if is_address(my_address):
                         user_total = contract.functions.getWalletCurrentTier(my_address).call()
                         text = 'You are in tier: {}'
                         update.message.reply_text(text .format(user_total))
-                        logging.info('[RESPONSE] /mytier:{} user in tier {}' .format(
+                        log_debug('[RESPONSE] /mytier:{} user in tier {}' .format(
                             update.message.chat_id, user_total))
                         connection.close()
                     else:
                         update.message.reply_text('Address is invalid...')
-                        logging.info('[RESPONSE] /mytier:{} address is invalid...'
+                        log_debug('[RESPONSE] /mytier:{} address is invalid...'
                                     .format(update.message.chat_id))
                 except (IndexError, ValueError):
                     update.message.reply_text('This address has no tier.')
-                    logging.warning('[TRYERROR] /mytier:{} address has no tier'.format(
+                    log_warning('[TRYERROR] /mytier:{} address has no tier'.format(
                         update.message.chat_id))
         else:
             update.message.reply_text(private_msg)
-            logging.info('[RESPONSE] /mytier:{} {}'.format(update.message.chat_id, private_msg))
-    logging.info('[COMPLETE] /mytier:{}'.format(update.message.chat_id))
+            log_debug('[RESPONSE] /mytier:{} {}'.format(update.message.chat_id, private_msg))
+    log_debug('[COMPLETE] /mytier:{}'.format(update.message.chat_id))
 
 def get_my_total(update, context):
     """Total Staked"""
-    logging.info('[STARTING] /mytotal:{}' .format(update.message.chat_id))
+    log_debug('[STARTING] /mytotal:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         if update.message.chat_id > 0:
-            logging.info('[DATABASE] /mytotal:{} get user address from database' .format(
+            log_debug('[DATABASE] /mytotal:{} get user address from database' .format(
                 update.message.chat_id))
             connection = sqlite3.connect("bot.db")
             cursor = connection.cursor()
@@ -302,14 +306,14 @@ def get_my_total(update, context):
                 (update.message.chat_id,),
             ).fetchone()
             if row is None:
-                logging.info('[DATABASE] /mytotal:{} address not set' .format(
+                log_debug('[DATABASE] /mytotal:{} address not set' .format(
                     update.message.chat_id))
                 update.message.reply_text("You must first use /setaddress")
             else:
                 address = row[0]
                 try:
                     if is_address(address):
-                        logging.info('[LCWQUERY] /mytotal:{} {}' .format(
+                        log_debug('[LCWQUERY] /mytotal:{} {}' .format(
                             update.message.chat_id, lcw_url))
                         response = get_live_coin_watch(update, context)
                         rate = response["rate"]
@@ -321,29 +325,29 @@ def get_my_total(update, context):
                         #ethFormat = f"{userInWei:,}"
                         text = "You are staking: {} GLQ || Value ≈ ${}"
                         update.message.reply_text(text .format(eth_format, f_total))
-                        logging.info("""[RESPONSE] /mytotal:{} user is staking: {} GLQ || Value ≈
+                        log_debug("""[RESPONSE] /mytotal:{} user is staking: {} GLQ || Value ≈
                                     ${}""" .format(update.message.chat_id, eth_format, f_total))
                         connection.close()
                     else:
                         update.message.reply_text('Address is invalid...')
-                        logging.info('[RESPONSE] /mytotal:{} Addess is invalid...'
+                        log_debug('[RESPONSE] /mytotal:{} Addess is invalid...'
                                     .format(update.message.chat_id))
                 except (IndexError, ValueError):
                     update.message.reply_text('Usage: /total after you /set your address')
-                    logging.warning('[TRYERROR] /mytotal:{} Usage: /total after /set'
+                    log_warning('[TRYERROR] /mytotal:{} Usage: /total after /set'
                                 .format(update.message.chat_id))
         else:
             update.message.reply_text(private_msg)
-            logging.info('[RESPONSE] /mytotal:{} {}'.format(update.message.chat_id, private_msg))
-    logging.info('[COMPLETE] /mytotal:{}' .format(update.message.chat_id))
+            log_debug('[RESPONSE] /mytotal:{} {}'.format(update.message.chat_id, private_msg))
+    log_debug('[COMPLETE] /mytotal:{}' .format(update.message.chat_id))
 
 ########     MAIN GETTER FUNCTIONS    #########
 
 def get_apy(update, context):
     """APYs"""
-    logging.info('[STARTING] /apy:{}' .format(update.message.chat_id))
+    log_debug('[STARTING] /apy:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
-        logging.info('[CONTRACT] /apy:{} getTiersAPY' .format(update.message.chat_id))
+        log_debug('[CONTRACT] /apy:{} getTiersAPY' .format(update.message.chat_id))
         apys = contract.functions.getTiersAPY().call()
         tiers_apy = [web3.fromWei(apy, 'ether') for apy in apys]
 
@@ -357,19 +361,19 @@ def get_apy(update, context):
 
         response = '```\n{}```'.format(table.get_string())
         update.message.reply_text(response, parse_mode='Markdown')
-        logging.info('[RESPONSE] /apy:{} Tier 1: {}% Tier 2: {}% Tier 3: {}%'
+        log_debug('[RESPONSE] /apy:{} Tier 1: {}% Tier 2: {}% Tier 3: {}%'
                     .format(update.message.chat_id, tiers_apy[0], tiers_apy[1], tiers_apy[2]))
-    logging.info('[COMPLETE] /apy:{}' .format(update.message.chat_id))
+    log_debug('[COMPLETE] /apy:{}' .format(update.message.chat_id))
 
 def get_tiers(update, context):
     """Get Tiers"""
-    logging.info('[STARTING] /tiers:{}' .format(update.message.chat_id))
+    log_debug('[STARTING] /tiers:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         tier_totals = get_tier_totals()
         formatted_tiers = format_tiers(tier_totals)
         send_tiers_response(update, formatted_tiers)
-        logging.info('[RESPONSE] /tiers:{}' .format(update.message.chat_id))
-    logging.info('[COMPLETE] /tiers:{}' .format(update.message.chat_id))
+        log_debug('[RESPONSE] /tiers:{}' .format(update.message.chat_id))
+    log_debug('[COMPLETE] /tiers:{}' .format(update.message.chat_id))
 
 def get_tier_totals():
     """Get tier totals"""
@@ -419,15 +423,30 @@ def send_tiers_response(update, formatted_tiers):
 
 def get_top(update, context):
     """Top Stakers"""
-    logging.info('[STARTING] /top:{}' .format(update.message.chat_id))
+    log_debug('[STARTING] /top:{}'.format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
-        tops = contract.functions.getTopStakers().call()
-        response = get_live_coin_watch(update, context)
-        formatted_top_three = format_top_stakers(tops)
-        formatted_values = format_staker_values(tops)
-        send_top_stakers_response(update, formatted_top_three, formatted_values, response["rate"])
-        logging.info('[RESPONSE] /top:{}' .format(update.message.chat_id))
-    logging.info('[COMPLETE] /top:{}' .format(update.message.chat_id))
+        for _ in range(3):  # retry 3 times
+            time.sleep(1)
+            try:
+                tops = contract.functions.getTopStakers().call()
+                break
+            except ContractLogicError as e:
+                log_warning(f"Attempt failed due to {str(e)}. Retrying...")
+                time.sleep(1)
+        else:
+            log_error("[ERROR] Maximum retries reached for /top:{}".format(update.message.chat_id))
+            return
+
+        try:
+            response = get_live_coin_watch(update, context)  # consider adding retry here as well
+            formatted_top_three = format_top_stakers(tops)
+            formatted_values = format_staker_values(tops)
+            send_top_stakers_response(update, formatted_top_three, formatted_values, response["rate"])
+            log_debug('[RESPONSE] /top:{}'.format(update.message.chat_id))
+        except Exception as e:
+            log_error(f"Error occurred in /top: {str(e)}")
+    log_debug('[COMPLETE] /top:{}'.format(update.message.chat_id))
+
 
 def format_top_stakers(tops):
     """Format top stakers"""
@@ -469,9 +488,9 @@ def send_top_stakers_response(update, formatted_top_three, formatted_values, rat
 
 def get_total_staked(update, context):
     """Staked"""
-    logging.info('[STARTING] /totalstaked:{}' .format(update.message.chat_id))
+    log_debug('[STARTING] /totalstaked:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
-        logging.info('[LCWQUERY] /totalstaked:{} {}' .format(update.message.chat_id, lcw_url))
+        log_debug('[LCWQUERY] /totalstaked:{} {}' .format(update.message.chat_id, lcw_url))
         try:
             response = get_live_coin_watch(update, context)
             rate = response["rate"]
@@ -490,18 +509,18 @@ def get_total_staked(update, context):
             table.add_row([eth_format, '$' + f_total])
             response = '```\n{}```'.format(table.get_string())
             update.message.reply_text(response, parse_mode='Markdown')
-            logging.info('[RESPONSE] /totalstaked:{} Staked GLQ: {} || Value ≈ ${}'
+            log_debug('[RESPONSE] /totalstaked:{} Staked GLQ: {} || Value ≈ ${}'
                         .format(update.message.chat_id, eth_format, f_total))
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /staked')
-            logging.info('[RESPONSE] /totalstaked:{} usage /staked')
-    logging.info('[COMPLETE] /totalstaked:{}' .format(update.message.chat_id))
+            log_debug('[RESPONSE] /totalstaked:{} usage /staked')
+    log_debug('[COMPLETE] /totalstaked:{}' .format(update.message.chat_id))
 
 def get_total_stakers(update, context):
     """Stakers"""
-    logging.info('[STARTING] /totalstakers:{}' .format(update.message.chat_id))
+    log_debug('[STARTING] /totalstakers:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
-        logging.info('[CONTRACT] /totalstakers:{} getTotalStakers' .format(update.message.chat_id))
+        log_debug('[CONTRACT] /totalstakers:{} getTotalStakers' .format(update.message.chat_id))
         try:
             user_total = contract.functions.getTotalStakers().call()
             table = PrettyTable()
@@ -509,80 +528,80 @@ def get_total_stakers(update, context):
             table.add_row([user_total])
             response = '```\n{}```'.format(table.get_string())
             update.message.reply_text(response, parse_mode='Markdown')
-            logging.info('[RESPONSE] /totalstakers:{} totalStakers:{}'
+            log_debug('[RESPONSE] /totalstakers:{} totalStakers:{}'
                         .format(update.message.chat_id, user_total))
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /stakers')
-            logging.info('[RESPONSE] /totalstakers:{} usage: /stakers' .format(
+            log_debug('[RESPONSE] /totalstakers:{} usage: /stakers' .format(
                 update.message.chat_id))
-    logging.info('[COMPLETE] /totalstakers:{}' .format(update.message.chat_id))
+    log_debug('[COMPLETE] /totalstakers:{}' .format(update.message.chat_id))
 
-#########     LIST INFO FUNCTIONS    ##########
+#########     LIST debug FUNCTIONS    ##########
 
 def get_websites(update, context):
     """Websites"""
-    logging.info('[STARTING] /websites:{}' .format(update.message.chat_id))
+    log_debug('[STARTING] /websites:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         try:
             response = ''
             for website in websites:
                 response += website[0] + ' : ' + website[1] + '\n'
             update.message.reply_text(response)
-            logging.info('[RESPONSE] /websites:{} sent websites' .format(update.message.chat_id))
+            log_debug('[RESPONSE] /websites:{} sent websites' .format(update.message.chat_id))
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /websites')
-            logging.info('[RESPONSE] /websites:{} usage: /websites' .format(
+            log_debug('[RESPONSE] /websites:{} usage: /websites' .format(
                 update.message.chat_id))
-    logging.info('[COMPLETE] /websites:{}' .format(update.message.chat_id))
+    log_debug('[COMPLETE] /websites:{}' .format(update.message.chat_id))
 
 def get_socials(update, context):
     """Socials"""
-    logging.info('[STARTING] /socials:{}' .format(update.message.chat_id))
+    log_debug('[STARTING] /socials:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         try:
             response = ''
             for social in socials:
                 response += social[0] + ' : ' + social[1] + '\n'
             update.message.reply_text(response)
-            logging.info('[RESPONSE] /socials:{} sent socials' .format(update.message.chat_id))
+            log_debug('[RESPONSE] /socials:{} sent socials' .format(update.message.chat_id))
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /socials')
-            logging.info('[RESPONSE] /socials:{} usage: /socials' .format(update.message.chat_id))
-    logging.info('[COMPLETE] /socials:{}' .format(update.message.chat_id))
+            log_debug('[RESPONSE] /socials:{} usage: /socials' .format(update.message.chat_id))
+    log_debug('[COMPLETE] /socials:{}' .format(update.message.chat_id))
 
 def get_staking(update, context):
-    """Staking Info"""
-    logging.info('[STARTING] /staking:{}' .format(update.message.chat_id))
+    """Staking debug"""
+    log_debug('[STARTING] /staking:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         try:
             response = ''
             for stake in staking:
                 response += stake[0] + ' : ' + stake[1] + '\n'
             update.message.reply_text(response)
-            logging.info('[RESPONSE] /staking:{} sent staking' .format(update.message.chat_id))
+            log_debug('[RESPONSE] /staking:{} sent staking' .format(update.message.chat_id))
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /staking')
-            logging.info('[RESPONSE] /staking:{} usage: /staking' .format(update.message.chat_id))
-    logging.info('[COMPLETE] /staking:{}' .format(update.message.chat_id))
+            log_debug('[RESPONSE] /staking:{} usage: /staking' .format(update.message.chat_id))
+    log_debug('[COMPLETE] /staking:{}' .format(update.message.chat_id))
 
 def get_documentation(update, context):
-    """Documentation Info"""
-    logging.info('[STARTING] /documentation:{}' .format(update.message.chat_id))
+    """Documentation debug"""
+    log_debug('[STARTING] /documentation:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         try:
             response = 'Docs : https://glq.link/docs'
             update.message.reply_text(response)
-            logging.info('[RESPONSE] /documentation:{} sent documentation' .format(
+            log_debug('[RESPONSE] /documentation:{} sent documentation' .format(
                 update.message.chat_id))
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /documentation')
-            logging.info('[RESPONSE] /documentation:{} usage: /documentation' .format(
+            log_debug('[RESPONSE] /documentation:{} usage: /documentation' .format(
                 update.message.chat_id))
-    logging.info('[COMPLETE] /documentation:{}' .format(update.message.chat_id))
+    log_debug('[COMPLETE] /documentation:{}' .format(update.message.chat_id))
 
 def get_short_cuts(update, context):
-    """Shortcuts Info"""
-    logging.info('[STARTING] /shortcuts:{}' .format(update.message.chat_id))
+    """Shortcuts debug"""
+    log_debug('[STARTING] /shortcuts:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         try:
             table = PrettyTable()
@@ -592,16 +611,16 @@ def get_short_cuts(update, context):
                 table.add_row(shortcut)
             response = '```\n{}```'.format(table.get_string())
             update.message.reply_text(response, parse_mode='Markdown')
-            logging.info('[RESPONSE] /shortcuts:{} sent shortcuts' .format(update.message.chat_id))
+            log_debug('[RESPONSE] /shortcuts:{} sent shortcuts' .format(update.message.chat_id))
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /socials')
-            logging.info('[RESPONSE] /shortcuts:{} usage: /shortcuts' .format(
+            log_debug('[RESPONSE] /shortcuts:{} usage: /shortcuts' .format(
                 update.message.chat_id))
-    logging.info('[COMPLETE] /shortcuts:{}' .format(update.message.chat_id))
+    log_debug('[COMPLETE] /shortcuts:{}' .format(update.message.chat_id))
 
 def get_listings(update, context):
     """CEX/DEX Listings"""
-    logging.info('[STARTING] /listings:{}' .format(update.message.chat_id))
+    log_debug('[STARTING] /listings:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         try:
             response = ''
@@ -610,43 +629,43 @@ def get_listings(update, context):
             for dex_listing in dex_listings:
                 response += dex_listing[0] + ' : ' + dex_listing[1] + ' : ' + dex_listing[2] +'\n'
             update.message.reply_text(response)
-            logging.info('[RESPONSE] /listings:{} sent listings' .format(update.message.chat_id))
+            log_debug('[RESPONSE] /listings:{} sent listings' .format(update.message.chat_id))
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /listings')
-            logging.info('[RESPONSE] /listings:{} usage: /listings' .format(
+            log_debug('[RESPONSE] /listings:{} usage: /listings' .format(
                 update.message.chat_id))
-    logging.info('[COMPLETE] /listings:{}' .format(update.message.chat_id))
+    log_debug('[COMPLETE] /listings:{}' .format(update.message.chat_id))
 
 def get_status(update, context):
     """Monitor Status"""
-    logging.info('[STARTING] /status:{}' .format(update.message.chat_id))
+    log_debug('[STARTING] /status:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         try:
             response = ''
             for stat in status:
                 response += stat[0] + ' : ' + stat[1] + '\n'
             update.message.reply_text(response)
-            logging.info('[RESPONSE] /status:{} sent status' .format(update.message.chat_id))
+            log_debug('[RESPONSE] /status:{} sent status' .format(update.message.chat_id))
         except (IndexError, ValueError):
             update.message.reply_text('Usage: /status')
-            logging.info('[RESPONSE] /status:{} usage: /status' .format(update.message.chat_id))
-    logging.info('[COMPLETE] /status:{}' .format(update.message.chat_id))
+            log_debug('[RESPONSE] /status:{} usage: /status' .format(update.message.chat_id))
+    log_debug('[COMPLETE] /status:{}' .format(update.message.chat_id))
 
 def get_apply(update, context):
     """Developer Application"""
-    logging.info('[STARTING] /apply:{}' .format(update.message.chat_id))
+    log_debug('[STARTING] /apply:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
-        logging.info('[RESPONSE] /apply:{}' .format(update.message.chat_id))
+        log_debug('[RESPONSE] /apply:{}' .format(update.message.chat_id))
         update.message.reply_text(apply)
-    logging.info('[COMPLETE] /apply:{}' .format(update.message.chat_id))
+    log_debug('[COMPLETE] /apply:{}' .format(update.message.chat_id))
 
 #######     LIVECOINWATCH  FUNCTIONS    #######
 
 def get_live_coin_watch(update, context):
     """LiveCoinWatch Fetch"""
-    logging.info('[STARTING] /lcwquery:{}' .format(update.message.chat_id))
+    log_debug('[STARTING] /lcwquery:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
-        logging.info('[LCWQUERY] /lcwquery:{} {}' .format(update.message.chat_id, lcw_url))
+        log_debug('[LCWQUERY] /lcwquery:{} {}' .format(update.message.chat_id, lcw_url))
         payload = json.dumps({
             "currency": 'USD',
             "code": "GLQ",
@@ -661,16 +680,16 @@ def get_live_coin_watch(update, context):
         rate_raw = resp_json["rate"]
         rate = ("{:.6f}".format(rate_raw)).strip()
         #response = "Price: ${}\nVolume: ${}\nATH: ${}\nMcap: ${}"
-        logging.info('[RESPONSE] /lcwquery:{} Price: {}'
+        log_debug('[RESPONSE] /lcwquery:{} Price: {}'
                     .format(update.message.chat_id, rate))
-        logging.info('[COMPLETE] /lcwquery:{}' .format(update.message.chat_id))
+        log_debug('[COMPLETE] /lcwquery:{}' .format(update.message.chat_id))
     return resp_json
 
 def live_coin_watch_fiats(update, context):
     """LiveCoinWatch Fiats"""
-    logging.info('[STARTING] /lcwfiats:{}' .format(update.message.chat_id))
+    log_debug('[STARTING] /lcwfiats:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
-        logging.info('[LCWQUERY] /lcwfiats:{} {}' .format(update.message.chat_id, lcw_fiats_url))
+        log_debug('[LCWQUERY] /lcwfiats:{} {}' .format(update.message.chat_id, lcw_fiats_url))
         payload = '{}'
         headers = {
             'content-type': 'application/json',
@@ -679,8 +698,8 @@ def live_coin_watch_fiats(update, context):
         resp_post = requests.request("POST", lcw_fiats_url, headers=headers, data=payload)
         resp_json = json.loads(resp_post.text)
         response = "Data Fetched"
-        logging.info('[RESPONSE] /lcwfiats:{} {}' .format(update.message.chat_id, response))
-        logging.info('[COMPLETE] /lcfiats:{}' .format(update.message.chat_id))
+        log_debug('[RESPONSE] /lcwfiats:{} {}' .format(update.message.chat_id, response))
+        log_debug('[COMPLETE] /lcfiats:{}' .format(update.message.chat_id))
     return resp_json
 
 def local_live_coin_watch_fiats():
@@ -698,24 +717,24 @@ def local_live_coin_watch_fiats():
 def get_maint_mode(update, context):
     """Check if maintenance mode is enabled."""
     if context is None:
-        logging.warning('[USERMODE] No context available')
+        log_warning('[DEBUGGER] No context available')
     if maint_mode == 1:
         if update.message.chat_id == allowed_admin:
-            logging.info('[USERMODE] Maintenance: ON | Admin Allowed')
+            #log_debug('[DEBUGGER] Maintenance: ON | Admin Allowed')
             return False
-        logging.warning('[USERMODE] Maintenance: ON | Not Admin')
+        log_warning('[DEBUGGER] Maintenance: ON | Not Admin')
         update.message.reply_text(maint_mode_msg)
         return True
-    logging.info('[USERMODE] Maintenance: OFF | Not Admin')
+    #log_debug('[DEBUGGER] Maintenance: OFF')
     return False
 
 def log_maint_mode():
     """Runs at first start to log maintenance mode."""
     if maint_mode == 1:
-        logging.warning('[USERMODE] {}' .format(maint_mode_log_msg_on))
-        logging.warning('[USERMODE] Admin: {}'.format(allowed_admin))
+        log_warning('[DEBUGGER] {}' .format(maint_mode_log_msg_on))
+        log_warning('[DEBUGGER] Admin: {}'.format(allowed_admin))
     else:
-        logging.info('[USERMODE] {}' .format(maint_mode_log_msg_off))
+        log_info('[DEBUGGER] {}' .format(maint_mode_log_msg_off))
 
 ################     ROUTES    ################
 
@@ -777,6 +796,7 @@ def alt_routes(dispatch):
 
 def main():
     """Main"""
+    log_info(version_msg + bot_version)
     # Display Maintenance Status
     log_maint_mode()
     # Create the bot
@@ -788,7 +808,7 @@ def main():
     legacy_routes(dispatch)
     alt_routes(dispatch)
     # Start Polling
-    logging.info('[USERMODE] Starting Scheduler')
+    log_info(sheduler_start_msg)
     updater.start_polling()
     updater.idle()
 

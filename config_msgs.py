@@ -12,6 +12,12 @@ Version         : 1.1
 Description     : Msgs Config - Telegram bot for GraphLinq
 """
 
+# Version Info
+version_msg = '[STARTING] GraphLinq Telegram Bot v'
+
+# Bot Start Msg
+sheduler_start_msg = '[SCHEDULE] Starting Scheduler'
+
 # /start
 start_msg = [
     ['Welcome to the GraphLinq Telegram Bot.'],
