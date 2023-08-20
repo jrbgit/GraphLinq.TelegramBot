@@ -12,8 +12,14 @@ Description     : Telegram bot for GraphLinq
 """
 
 # Main Import Block
+import os
 import re
 import time
+import platform
+import psutil
+import datetime
+import socket
+import threading
 import json
 import sqlite3
 import requests
@@ -714,6 +720,103 @@ def local_live_coin_watch_fiats():
 
 ########     MAINTENANCE  FUNCTIONS    ########
 
+
+def admin_command(update, context):
+    """Admin-only command"""
+    log_info(f"[STARTING] /admin for user {update.message.chat_id}")
+
+    try:
+        # Server details
+        current_time = datetime.datetime.now().strftime('%H:%M:%S')
+        current_date = datetime.datetime.now().strftime('%Y-%m-%d')
+        timezone = time.tzname[time.daylight]
+        local_time = time.ctime()
+        load_avg = os.getloadavg()[0]
+        memory_info = psutil.virtual_memory()
+        memory_usage = f"{memory_info.used / (1024**2):.2f} MB of {memory_info.total / (1024**2):.2f} MB"
+        uptime_seconds = time.time() - psutil.boot_time()
+        uptime = str(datetime.timedelta(seconds=uptime_seconds))
+        python_version = platform.python_version()
+
+        # Server IP Address
+        server_ip = socket.gethostbyname(socket.gethostname())
+
+        # Available Disk Space
+        disk_usage = psutil.disk_usage('/')
+        available_disk = f"{disk_usage.free / (1024**3):.2f} GB of {disk_usage.total / (1024**3):.2f} GB"
+
+        # Number of Active Threads
+        active_threads = threading.active_count()
+
+        # Network Traffic
+        #net_io = psutil.net_io_counters()
+        #sent_data = f"{net_io.bytes_sent / (1024**2):.2f} MB"
+        #recv_data = f"{net_io.bytes_recv / (1024**2):.2f} MB"
+
+        # CPU Usage
+        cpu_usage = f"{psutil.cpu_percent(interval=1)}%"
+
+        # Memory Use in GB
+        memory_info = psutil.virtual_memory()
+        memory_usage = f"{memory_info.used / (1024**3):.2f} GB of {memory_info.total / (1024**3):.2f} GB"
+
+        # Network Traffic in GB
+        net_io = psutil.net_io_counters()
+        sent_data = f"{net_io.bytes_sent / (1024**3):.2f} GB"
+        recv_data = f"{net_io.bytes_recv / (1024**3):.2f} GB"
+        # Swap Memory Use in GB
+        swap_info = psutil.swap_memory()
+        swap_usage = f"{swap_info.used / (1024**3):.2f} GB of {swap_info.total / (1024**3):.2f} GB"
+
+        num_processes = len(psutil.pids())
+        connections = psutil.net_connections()
+        established_connections = len([c for c in connections if c.status == 'ESTABLISHED'])
+        boot_time = datetime.datetime.fromtimestamp(psutil.boot_time()).strftime('%Y-%m-%d %H:%M:%S')
+
+        # Constructing the table using PrettyTable
+        table = PrettyTable()
+        table.field_names = ["Metric", "Value"]
+        table.add_row(["Current Time", current_time])
+        table.add_row(["Current Date", current_date])
+        table.add_row(["Timezone", timezone])
+        table.add_row(["Local Time", local_time])
+        table.add_row(["System Load (1 min avg)", str(load_avg)])
+        table.add_row(["Memory Use", memory_usage])
+        table.add_row(["Swap Usage", swap_usage])
+        table.add_row(["Uptime", uptime])
+        table.add_row(["Python Version", python_version])
+        table.add_row(["Bot Version", bot_version])  # Assuming bot_version is defined somewhere in your configs
+        table.add_row(["Maintenance Mode", "Enabled" if maint_mode else "Disabled"])
+        table.add_row(["Server IP", server_ip])
+        table.add_row(["Available Disk Space", available_disk])
+        table.add_row(["Active Threads", active_threads])
+        table.add_row(["Data Sent", sent_data])
+        table.add_row(["Data Received", recv_data])
+        table.add_row(["CPU Usage", cpu_usage])
+        table.add_row(["Processors", num_processes])
+        table.add_row(["Network Load", established_connections])
+        table.add_row(["Boot Time", boot_time])
+
+
+        # Check if the user is the admin
+        if update.message.chat_id == allowed_admin:
+            # Greet the admin
+            #update.message.reply_text("Hello, Admin!")
+            update.message.reply_text(f"Hello, Admin!\n```\n{table}\n```", parse_mode='Markdown')
+            log_info(f"[RESPONSE] /admin for user {update.message.chat_id}: Provided info to admin.")
+        else:
+            # If the user is not the admin
+            update.message.reply_text(f"Hey, nice to meet you!\n```\n{table}\n```", parse_mode='Markdown')
+            log_info(f"[RESPONSE] /admin for user {update.message.chat_id}: Provided info to admin.")
+
+    except Exception as e:
+        log_error(f"[ERROR] /admin for user {update.message.chat_id}: {str(e)}")
+        update.message.reply_text("An error occurred while processing your request. Please try again later.")
+
+    log_info(f"[COMPLETE] /admin for user {update.message.chat_id}")
+
+
+
 def get_maint_mode(update, context):
     """Check if maintenance mode is enabled."""
     if context is None:
@@ -793,6 +896,8 @@ def alt_routes(dispatch):
     dispatch.add_handler(CommandHandler("exchanges", get_listings))
     dispatch.add_handler(CommandHandler("setmyaddress", set_my_address))
 
+def admin_routes(dispatch):
+    dispatch.add_handler(CommandHandler('hi', admin_command))
 
 def main():
     """Main"""
@@ -807,6 +912,7 @@ def main():
     private_routes(dispatch)
     legacy_routes(dispatch)
     alt_routes(dispatch)
+    admin_routes(dispatch)
     # Start Polling
     log_info(sheduler_start_msg)
     updater.start_polling()
