@@ -15,7 +15,7 @@ import logging
 loggers = {}
 
 telegram_bot_logger = logging.getLogger('telegram')
-file_handler = logging.FileHandler('telegram_bot_debug.log')
+file_handler = logging.FileHandler('logs/telegram_bot_debug.log')
 formatter = logging.Formatter('[%(levelname)s] [%(asctime)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 file_handler.setFormatter(formatter)
 telegram_bot_logger.addHandler(file_handler)
@@ -23,31 +23,31 @@ telegram_bot_logger.addHandler(file_handler)
 
 log_formats = {
     logging.DEBUG: {
-        'filename': 'debug.log',
+        'filename': 'logs/debug.log',
         'encoding': 'utf-8',
         'format': '[DEBUG] [%(asctime)s] %(message)s',
         'datefmt': '%Y-%m-%d %H:%M:%S'
     },
     logging.INFO: {
-        'filename': 'info.log',
+        'filename': 'logs/info.log',
         'encoding': 'utf-8',
         'format': '[INFO] [%(asctime)s] %(message)s',
         'datefmt': '%Y-%m-%d %H:%M:%S'
     },
     logging.WARNING: {
-        'filename': 'warning.log',
+        'filename': 'logs/warning.log',
         'encoding': 'utf-8',
         'format': '[WARNING] [%(asctime)s] %(message)s',
         'datefmt': '%Y-%m-%d %H:%M:%S'
     },
     logging.ERROR: {
-        'filename': 'error.log',
+        'filename': 'logs/error.log',
         'encoding': 'utf-8',
         'format': '[ERROR] [%(asctime)s] %(message)s',
         'datefmt': '%Y-%m-%d %H:%M:%S'
     },
     logging.CRITICAL: {
-        'filename': 'critical.log',
+        'filename': 'logs/critical.log',
         'encoding': 'utf-8',
         'format': '[CRITICAL] [%(asctime)s] %(message)s',
         'datefmt': '%Y-%m-%d %H:%M:%S'

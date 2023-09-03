@@ -453,7 +453,6 @@ def get_top(update, context):
             log_error(f"Error occurred in /top: {str(e)}")
     log_debug('[COMPLETE] /top:{}'.format(update.message.chat_id))
 
-
 def format_top_stakers(tops):
     """Format top stakers"""
     top_three = []
@@ -542,7 +541,7 @@ def get_total_stakers(update, context):
                 update.message.chat_id))
     log_debug('[COMPLETE] /totalstakers:{}' .format(update.message.chat_id))
 
-#########     LIST debug FUNCTIONS    ##########
+#########     LIST FUNCTIONS    ##########
 
 def get_websites(update, context):
     """Websites"""
@@ -720,7 +719,6 @@ def local_live_coin_watch_fiats():
 
 ########     MAINTENANCE  FUNCTIONS    ########
 
-
 def admin_command(update, context):
     """Admin-only command"""
     log_info(f"[STARTING] /admin for user {update.message.chat_id}")
@@ -814,8 +812,6 @@ def admin_command(update, context):
         update.message.reply_text("An error occurred while processing your request. Please try again later.")
 
     log_info(f"[COMPLETE] /admin for user {update.message.chat_id}")
-
-
 
 def get_maint_mode(update, context):
     """Check if maintenance mode is enabled."""
