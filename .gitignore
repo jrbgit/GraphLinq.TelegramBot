@@ -1,3 +1,8 @@
 .env
 bot.db
-bot.log
+logs/critical.log
+logs/debug.log
+logs/error.log
+logs/info.log
+logs/telegram_bot_debug.log
+logs/warning.log
