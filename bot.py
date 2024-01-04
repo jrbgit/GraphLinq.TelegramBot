@@ -844,7 +844,7 @@ def public_routes(dispatch):
     dispatch.add_handler(CommandHandler("help", get_help))
     # Public Staking Routes
     dispatch.add_handler(CommandHandler("apy", get_apy))
-    dispatch.add_handler(CommandHandler("top", get_top))
+    ###dispatch.add_handler(CommandHandler("top", get_top))
     dispatch.add_handler(CommandHandler("tiers", get_tiers))
     dispatch.add_handler(CommandHandler("totalstaked", get_total_staked))
     dispatch.add_handler(CommandHandler("totalstakers", get_total_stakers))

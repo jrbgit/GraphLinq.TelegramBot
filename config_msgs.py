@@ -47,7 +47,7 @@ help_msg_public = [
     ['/totalstaked', 'View total staked'],
     ['/tiers', 'View total staked/tier'],
     ['/apy', 'View current APY'],
-    ['/top', 'View top 3 stakers'],
+    ###['/top', 'View top 3 stakers'],
     ['/websites', 'List GraphLinq websites'],
     ['/socials', 'List social media links'],
     ['/staking', 'View staking info'],
