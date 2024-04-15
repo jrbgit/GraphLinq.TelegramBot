@@ -32,7 +32,7 @@ def mask_string(s, fraction=0.5):
 
 
 # Version
-bot_version = '1.1'
+bot_version = '1.2'
 
 # Load .env
 load_dotenv()
