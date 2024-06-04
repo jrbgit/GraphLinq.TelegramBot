@@ -116,7 +116,8 @@ cex_listings = [
     ['Gate io', 'USDT', 'https://glq.link/gateioGLQ_USDT'],
     ['Bilaxy', 'ETH', 'https://glq.link/bilaxyGLQ_ETH'],
     ['MEXC', 'USDT', 'https://glq.link/mexcGLQ_USDT'],
-    ['Biconomy', 'USDT', 'https://glq.link/biconomyGLQ_USDT']
+    ['Biconomy', 'USDT', 'https://glq.link/biconomyGLQ_USDT'],
+    ['BitGet', 'USDT', 'https://www.bitget.com/spot/GLQUSDT']
 ]
 
 # /buy dex
