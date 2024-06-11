@@ -660,11 +660,11 @@ def get_total_supply_formatted(update, context):
             response = requests.get(url)
             if response.status_code == 200:
                 data = response.json()
-                
+
                 # Convert timestamp to a more human-readable format
                 timestamp = datetime.strptime(data['date'], '%Y-%m-%dT%H:%M:%S.%fZ')
                 readable_timestamp = timestamp.strftime('%Y-%m-%d %H:%M:%S')
-                
+
                 # Create and populate the table
                 table = PrettyTable()
                 table.field_names = ["GraphLinq Chain", "Value"]
@@ -675,7 +675,7 @@ def get_total_supply_formatted(update, context):
                 table.add_row(["Rewards Since Genesis", "{:,}".format(int(data["numberOfGLQRewardedSinceGENESISQ"]))])
                 table.add_row(["Server Time Stamp", readable_timestamp])
                 table.add_row(["Data Source", "explorer.graphlinq.io"])
-                
+
                 # Send the table as a response
                 response_message = '```\n{}```'.format(table)
                 update.message.reply_text(response_message, parse_mode='Markdown')
@@ -686,7 +686,6 @@ def get_total_supply_formatted(update, context):
             update.message.reply_text('An error occurred: {}'.format(e))
             log_debug('[ERROR] /supply:{} {}'.format(update.message.chat_id, e))
     log_debug('[COMPLETE] /supply:{}'.format(update.message.chat_id))
-
 
 
 #######     LIVECOINWATCH  FUNCTIONS    #######
@@ -748,7 +747,6 @@ def local_live_coin_watch_fiats():
 def admin_command(update, context):
     """Admin-only command"""
     log_info(f"[STARTING] /admin for user {update.message.chat_id}")
-
     try:
         # Server details
         current_time = datetime.now().strftime('%H:%M:%S')
@@ -761,23 +759,17 @@ def admin_command(update, context):
         uptime_seconds = time.time() - psutil.boot_time()
         uptime = str(timedelta(seconds=uptime_seconds))
         python_version = platform.python_version()
-
         # Server IP Address
         server_ip = socket.gethostbyname(socket.gethostname())
-
         # Available Disk Space
         disk_usage = psutil.disk_usage('/')
         available_disk = f"{disk_usage.free / (1024**3):.2f} GB of {disk_usage.total / (1024**3):.2f} GB"
-
         # Number of Active Threads
         active_threads = threading.active_count()
-
         # CPU Usage
         cpu_usage = f"{psutil.cpu_percent(interval=1)}%"
-
         # Memory Use in GB
         memory_usage = f"{memory_info.used / (1024**3):.2f} GB of {memory_info.total / (1024**3):.2f} GB"
-
         # Network Traffic in GB
         net_io = psutil.net_io_counters()
         sent_data = f"{net_io.bytes_sent / (1024**3):.2f} GB"
@@ -786,7 +778,6 @@ def admin_command(update, context):
         # Swap Memory Use in GB
         swap_info = psutil.swap_memory()
         swap_usage = f"{swap_info.used / (1024**3):.2f} GB of {swap_info.total / (1024**3):.2f} GB"
-
         num_processes = len(psutil.pids())
         connections = psutil.net_connections()
         established_connections = len([c for c in connections if c.status == 'ESTABLISHED'])
@@ -815,8 +806,6 @@ def admin_command(update, context):
         table.add_row(["Processors", num_processes])
         table.add_row(["Network Load", established_connections])
         table.add_row(["Boot Time", boot_time])
-
-
         # Check if the user is the admin
         if update.message.chat_id == allowed_admin:
             # Greet the admin
@@ -827,11 +816,9 @@ def admin_command(update, context):
             # If the user is not the admin
             update.message.reply_text(f"Hey, nice to meet you!\n```\n{table}\n```", parse_mode='Markdown')
             log_info(f"[RESPONSE] /admin for user {update.message.chat_id}: Provided info to admin.")
-
     except Exception as e:
         log_error(f"[ERROR] /admin for user {update.message.chat_id}: {str(e)}")
         update.message.reply_text("An error occurred while processing your request. Please try again later.")
-
     log_info(f"[COMPLETE] /admin for user {update.message.chat_id}")
 
 def get_maint_mode(update, context):
@@ -937,6 +924,7 @@ def main():
     updater.start_polling()
     updater.idle()
 
-# Initialize
+#########     Initialize    ##########
+
 if __name__ == '__main__':
     main()
