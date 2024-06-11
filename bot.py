@@ -7,7 +7,7 @@ Email           : info@graphlinq.io
 Website         : https://graphlinq.io
 Repository      : https://github.com/jrbgit/GraphLinq.TelegramBot
 Date            : 2023-06-20
-Version         : 1.1
+Version         : 1.2
 Description     : Telegram bot for GraphLinq
 """
 
@@ -17,7 +17,6 @@ import re
 import time
 import platform
 import psutil
-#import datetime
 import socket
 import threading
 import json
@@ -661,9 +660,11 @@ def get_total_supply_formatted(update, context):
             response = requests.get(url)
             if response.status_code == 200:
                 data = response.json()
+
                 # Convert timestamp to a more human-readable format
                 timestamp = datetime.strptime(data['date'], '%Y-%m-%dT%H:%M:%S.%fZ')
                 readable_timestamp = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
                 # Create and populate the table
                 table = PrettyTable()
                 table.field_names = ["GraphLinq Chain", "Value"]
@@ -674,6 +675,7 @@ def get_total_supply_formatted(update, context):
                 table.add_row(["Rewards Since Genesis", "{:,}".format(int(data["numberOfGLQRewardedSinceGENESISQ"]))])
                 table.add_row(["Server Time Stamp", readable_timestamp])
                 table.add_row(["Data Source", "explorer.graphlinq.io"])
+
                 # Send the table as a response
                 response_message = '```\n{}```'.format(table)
                 update.message.reply_text(response_message, parse_mode='Markdown')
@@ -684,6 +686,7 @@ def get_total_supply_formatted(update, context):
             update.message.reply_text('An error occurred: {}'.format(e))
             log_debug('[ERROR] /supply:{} {}'.format(update.message.chat_id, e))
     log_debug('[COMPLETE] /supply:{}'.format(update.message.chat_id))
+
 
 #######     LIVECOINWATCH  FUNCTIONS    #######
 
@@ -705,7 +708,7 @@ def get_live_coin_watch(update, context):
         resp_json = json.loads(resp_post.text)
         rate_raw = resp_json["rate"]
         rate = ("{:.6f}".format(rate_raw)).strip()
-        #response = "Price: ${}\nVolume: ${}\nATH: ${}\nMcap: ${}"
+        response = "Price: ${}\nVolume: ${}\nATH: ${}\nMcap: ${}"
         log_debug('[RESPONSE] /lcwquery:{} Price: {}'
                     .format(update.message.chat_id, rate))
         log_debug('[COMPLETE] /lcwquery:{}' .format(update.message.chat_id))
@@ -737,6 +740,7 @@ def local_live_coin_watch_fiats():
     local_fiats = cursor.execute("SELECT * FROM fiats").fetchall()
     connection.close()
     return local_fiats
+
 
 ########     MAINTENANCE  FUNCTIONS    ########
 
@@ -770,6 +774,7 @@ def admin_command(update, context):
         net_io = psutil.net_io_counters()
         sent_data = f"{net_io.bytes_sent / (1024**3):.2f} GB"
         recv_data = f"{net_io.bytes_recv / (1024**3):.2f} GB"
+
         # Swap Memory Use in GB
         swap_info = psutil.swap_memory()
         swap_usage = f"{swap_info.used / (1024**3):.2f} GB of {swap_info.total / (1024**3):.2f} GB"
@@ -777,6 +782,7 @@ def admin_command(update, context):
         connections = psutil.net_connections()
         established_connections = len([c for c in connections if c.status == 'ESTABLISHED'])
         boot_time = datetime.fromtimestamp(psutil.boot_time()).strftime('%Y-%m-%d %H:%M:%S')
+
         # Constructing the table using PrettyTable
         table = PrettyTable()
         table.field_names = ["Metric", "Value"]
