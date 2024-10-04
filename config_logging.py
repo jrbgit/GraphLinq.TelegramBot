@@ -7,7 +7,7 @@ Email           : info@graphlinq.io
 Website         : https://graphlinq.io
 Repository      : https://github.com/jrbgit/GraphLinq.TelegramBot
 Date            : 2023-06-20
-Version         : 1.1
+Version         : 1.2
 Description     : Logging Config - Telegram bot for GraphLinq
 """
 import logging

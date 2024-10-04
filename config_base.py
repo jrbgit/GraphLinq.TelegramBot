@@ -7,7 +7,7 @@ Email           : info@graphlinq.io
 Website         : https://graphlinq.io
 Repository      : https://github.com/jrbgit/GraphLinq.TelegramBot
 Date            : 2023-06-20
-Version         : 1.1
+Version         : 1.2
 Description     : Base Config - Telegram bot for GraphLinq
 """
 
@@ -32,7 +32,7 @@ def mask_string(s, fraction=0.5):
 
 
 # Version
-bot_version = '1.1'
+bot_version = '1.2'
 
 # Load .env
 load_dotenv()
@@ -62,3 +62,7 @@ log_info('[SETTINGS] Custom fiats is Disabled')
 
 lcw_fiats_url = 'https://api.livecoinwatch.com/fiats/all'
 log_info('[SETTINGS] Live Coin Watch Fiats: {}' .format(default_fiat))
+
+# GraphLinq Hub
+hub_url = 'https://api-hub.graphlinq.io/stats'
+log_info('[SETTINGS] GraphLinq Hub Prices: {}' .format(hub_url))

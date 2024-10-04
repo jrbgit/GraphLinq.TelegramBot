@@ -22,6 +22,7 @@ import threading
 import json
 import sqlite3
 import requests
+from decimal import Decimal
 from datetime import datetime, timedelta
 from prettytable import PrettyTable
 from telegram.ext import Updater, CommandHandler
@@ -33,7 +34,7 @@ from config_maint import (maint_mode, maint_mode_msg, allowed_admin, maint_mode_
 from config_msgs import (version_msg, sheduler_start_msg,start_msg, help_msg_private, help_msg_public,
     private_msg, websites, socials, staking, shortcuts, cex_listings, dex_listings,status,
     set_address_msg,apply)
-from config_base import (bot_version, lcw_url,lcw_fiats_url,telegram,lcw_api_key)
+from config_base import (bot_version, lcw_url, lcw_fiats_url, telegram, lcw_api_key, hub_url)
 from config_contract import (contract, web3)
 from web3.exceptions import ContractLogicError
 from requests.exceptions import RequestException
@@ -230,14 +231,14 @@ def get_my_rewards(update, context):
                     update.message.chat_id, my_address))
                 try:
                     if is_address(my_address):
-                        log_debug('[LCWQUERY] /myrewards:{} {}' .format(
-                            update.message.chat_id, lcw_url))
-                        response = get_live_coin_watch(update, context)
-                        var9 = response["rate"]
+                        log_debug('[HUBQUERY] /myrewards:{} {}' .format(
+                            update.message.chat_id, hub_url))
+                        response = get_hub_price(update, context)
+                        rate = Decimal(response)
                         user_total = contract.functions.getGlqToClaim(my_address).call()
                         user_in_wei = web3.fromWei(user_total, 'ether')
                         eth_format = ("{:,.2f}".format(user_in_wei))
-                        u_total = float(user_in_wei) * var9
+                        u_total = user_in_wei * rate
                         f_total = ("{:,.2f}".format(u_total))
                         text = 'Unclaimed rewards: {} GLQ || Value ≈ ${}'
                         update.message.reply_text(text .format(eth_format, f_total))
@@ -319,13 +320,13 @@ def get_my_total(update, context):
                 address = row[0]
                 try:
                     if is_address(address):
-                        log_debug('[LCWQUERY] /mytotal:{} {}' .format(
-                            update.message.chat_id, lcw_url))
-                        response = get_live_coin_watch(update, context)
-                        rate = response["rate"]
+                        log_debug('[HUBQUERY] /mytotal:{} {}' .format(
+                            update.message.chat_id, hub_url))
+                        response = get_hub_price(update, context)
+                        rate = Decimal(response)
                         user_total = contract.functions.getDepositedGLQ(address).call()
                         user_in_wei = web3.fromWei(user_total, 'ether')
-                        u_total = float(user_in_wei) * rate
+                        u_total = user_in_wei * rate
                         f_total = ("{:,.2f}".format(u_total))
                         eth_format = ("{:,.2f}".format(user_in_wei))
                         #ethFormat = f"{userInWei:,}"
@@ -480,10 +481,10 @@ def get_total_staked(update, context):
     """Staked"""
     log_debug('[STARTING] /totalstaked:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
-        log_debug('[LCWQUERY] /totalstaked:{} {}' .format(update.message.chat_id, lcw_url))
+        log_debug('[HUBQUERY] /totalstaked:{} {}' .format(update.message.chat_id, hub_url))
         try:
-            response = get_live_coin_watch(update, context)
-            rate = response["rate"]
+            response = get_hub_price(update, context)
+            rate = Decimal(response)
             total_tier1 = contract.functions.getTierTotalStaked(1).call()
             total_tier2 = contract.functions.getTierTotalStaked(2).call()
             total_tier3 = contract.functions.getTierTotalStaked(3).call()
@@ -491,7 +492,7 @@ def get_total_staked(update, context):
             tier2_in_wei = web3.fromWei(total_tier2, 'ether')
             tier3_in_wei = web3.fromWei(total_tier3, 'ether')
             staked_t = tier1_in_wei + tier2_in_wei + tier3_in_wei
-            u_total = float(staked_t) * rate
+            u_total = staked_t * rate
             f_total = ("{:,.2f}".format(u_total))
             eth_format = ("{:,.2f}".format(staked_t))
             table = PrettyTable()
@@ -502,8 +503,8 @@ def get_total_staked(update, context):
             log_debug('[RESPONSE] /totalstaked:{} Staked GLQ: {} || Value ≈ ${}'
                         .format(update.message.chat_id, eth_format, f_total))
         except (IndexError, ValueError):
-            update.message.reply_text('Usage: /staked')
-            log_debug('[RESPONSE] /totalstaked:{} usage /staked')
+            update.message.reply_text('Usage: /totalstaked')
+            log_debug('[RESPONSE] /totalstaked:{} usage /totalstaked')
     log_debug('[COMPLETE] /totalstaked:{}' .format(update.message.chat_id))
 
 def get_total_stakers(update, context):
@@ -687,8 +688,6 @@ def get_total_supply_formatted(update, context):
             log_debug('[ERROR] /supply:{} {}'.format(update.message.chat_id, e))
     log_debug('[COMPLETE] /supply:{}'.format(update.message.chat_id))
 
-
-
 #######     LIVECOINWATCH  FUNCTIONS    #######
 
 def get_live_coin_watch(update, context):
@@ -742,6 +741,22 @@ def local_live_coin_watch_fiats():
     connection.close()
     return local_fiats
 
+
+########     GRAPHLINQ HUB API FUNCTIONS     ########
+
+def get_hub_price(update, context):
+    """GraphLinq Hub Fetch"""
+    log_debug('[STARTING] /hubquery:{}' .format(update.message.chat_id))
+    if get_maint_mode(update, context) is False:
+        log_debug('[HUBQUERY] /hubquery:{} {}' .format(update.message.chat_id, hub_url))
+        resp_get = requests.get(hub_url)
+        resp_json = json.loads(resp_get.text)
+        rate_raw = resp_json["prices"]["GLQ"]
+        #rate = ("{:.6f}".format(rate_raw)).strip()
+        log_debug('[RESPONSE] /hubquery:{} Price: {}'
+                    .format(update.message.chat_id, rate_raw))
+        log_debug('[COMPLETE] /hubquery:{}' .format(update.message.chat_id))
+    return rate_raw
 
 ########     MAINTENANCE  FUNCTIONS    ########
 
@@ -917,6 +932,7 @@ def alt_routes(dispatch):
 
 def admin_routes(dispatch):
     dispatch.add_handler(CommandHandler('hi', admin_command))
+    dispatch.add_handler(CommandHandler('test', get_hub_price))
 
 def main():
     """Main"""
