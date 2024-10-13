@@ -116,14 +116,24 @@ cex_listings = [
     ['Gate io', 'USDT', 'https://glq.link/gateioGLQ_USDT'],
     ['Bilaxy', 'ETH', 'https://glq.link/bilaxyGLQ_ETH'],
     ['MEXC', 'USDT', 'https://glq.link/mexcGLQ_USDT'],
-    ['Biconomy', 'USDT', 'https://glq.link/biconomyGLQ_USDT'],
-    ['BitGet', 'USDT', 'https://www.bitget.com/spot/GLQUSDT']
+    ['BitGet', 'USDT', 'https://glq.link/bitgetGLQ_USDT'],
+    ['CoinEx', 'USDT', 'https://glq.link/coinexGLQ_USDT'],
+    ['CoinTide', 'USDT', 'https://glq.link/cointideGLQ_USDT']
 ]
 
 # /buy dex
 dex_listings = [
-    ['Uniswap', 'WETH', 'https://glq.link/uniswapv3'],
-    ['GLQ Hub', 'WETH', 'https://hub.graphlinq.io']
+    ['Uniswap v3', 'WETH', 'https://glq.link/uniswapv3'],
+    ['QuickSwap v3)', 'MATIC', 'https://glq.link/quickswapGLQ_MATICv3'],
+    ['QuickSwap v3)', 'ETH', 'https://glq.link/quickswapGLQ_ETHv3'],
+    ['QuickSwap v2)', 'ETH', 'https://glq.link/quickswapGLQ_ETHv2']
+    #['Uniswap v3 (Polygon)', 'MATIC', ''],
+    #['Uniswap v3 (Polygon)', 'ETH', '']
+]
+
+# /buy GLQ dex
+glq_dex_listings = [
+    ['GLQ Hub', 'WETH', 'https://glq.link/GLQ_HUB']
 ]
 
 # status websites

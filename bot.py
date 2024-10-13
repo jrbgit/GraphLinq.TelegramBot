@@ -32,8 +32,8 @@ from config_logging import (logging, log_formats, log_info, log_warning, log_deb
 from config_maint import (maint_mode, maint_mode_msg, allowed_admin, maint_mode_log_msg_on,
     maint_mode_log_msg_off)
 from config_msgs import (version_msg, sheduler_start_msg,start_msg, help_msg_private, help_msg_public,
-    private_msg, websites, socials, staking, shortcuts, cex_listings, dex_listings,status,
-    set_address_msg,apply)
+    private_msg, websites, socials, staking, shortcuts, cex_listings, dex_listings, glq_dex_listings,
+    status, set_address_msg,apply)
 from config_base import (bot_version, lcw_url, lcw_fiats_url, telegram, lcw_api_key, hub_url)
 from config_contract import (contract, web3)
 from web3.exceptions import ContractLogicError
@@ -614,11 +614,15 @@ def get_listings(update, context):
     log_debug('[STARTING] /listings:{}' .format(update.message.chat_id))
     if get_maint_mode(update, context) is False:
         try:
-            response = ''
+            response = '-- CENTRALIZED EXCHANGES --\n'
             for cex_listing in cex_listings:
-                response += cex_listing[0] + ' : ' + cex_listing[1] + ' : ' + cex_listing[2] +'\n'
+                response += cex_listing[0] + ' : ' + cex_listing[1] + ' : ' + cex_listing[2] + '\n'
+            response += '\n-- DECENTRALIZED EXCHANGES --\n'
             for dex_listing in dex_listings:
-                response += dex_listing[0] + ' : ' + dex_listing[1] + ' : ' + dex_listing[2] +'\n'
+                response += dex_listing[0] + ' : ' + dex_listing[1] + ' : ' + dex_listing[2] + '\n'
+            response += '\n-- GRAPHLINQ CHAIN HUB --\n'
+            for glq_dex_listing in glq_dex_listings:
+                response += glq_dex_listing[0] + ' : ' + glq_dex_listing[1] + ' : ' + glq_dex_listing[2] + '\n'
             update.message.reply_text(response)
             log_debug('[RESPONSE] /listings:{} sent listings' .format(update.message.chat_id))
         except (IndexError, ValueError):
