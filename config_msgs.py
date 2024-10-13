@@ -123,6 +123,7 @@ cex_listings = [
 # /buy dex
 dex_listings = [
     ['Uniswap', 'WETH', 'https://glq.link/uniswapv3'],
+    ['GLQ Hub', 'WETH', 'https://hub.graphlinq.io']
 ]
 
 # status websites
