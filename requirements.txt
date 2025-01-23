@@ -5,6 +5,7 @@ psutil
 requests
 prettytable
 eth-utils
+python-dotenv
 
 # psutil==5.8.0  # This is the latest as of my last update, make sure to use the version suitable for your application.
 # requests==2.25.1  # Latest version as of my last update.
