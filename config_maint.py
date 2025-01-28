@@ -11,11 +11,13 @@ Version         : 1.2
 Description     : Maint Config - Telegram bot for GraphLinq
 """
 
+from dotenv import load_dotenv
+
 # Maintenance Mode 0 = Off, 1 = On
-maint_mode = 1
+maint_mode = os.getenv('MAINT_MODE')
 
 # Admin that can bypass maintenance mode
-allowed_admin = 1392716682
+allowed_admin = os.getenv('ALLOWED_ADMIN')
 
 # Maintenance Mode Messages
 maint_mode_msg = 'This bot is in maintenance mode. Check back soon.'
