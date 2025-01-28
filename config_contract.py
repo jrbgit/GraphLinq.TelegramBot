@@ -14,6 +14,7 @@ Description     : Contract Config - Telegram bot for GraphLinq
 # Network to connect to like infura
 import logging
 import json
+from dotenv import load_dotenv
 from web3 import Web3
 
 from config_logging import (logging, log_formats, log_info, log_warning, log_debug,
@@ -25,11 +26,11 @@ from config_base import (bot_version, lcw_url,lcw_fiats_url,telegram,lcw_api_key
 
 
 # Network connection to your node or an infura like service
-network_url = 'https://glq-dataseed.graphlinq.io/'
+network_url = os.getenv('NETWORK_URL')
 log_info('[SETTINGS] Network URL: {}' .format(network_url))
 
 # Set the contract address
-address = '0xC09062656C4715085d7D345B25a8D8A7ee477521'
+address = os.getenv('CONTRACT_ADDRESS')
 log_info('[SETTINGS] Contract Address: {}' .format(address))
 
 # Load the abi
