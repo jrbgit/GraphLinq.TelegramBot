@@ -1,15 +1,8 @@
 python-telegram-bot==13.0
 wheel
-web3
-psutil
-requests
-prettytable
-eth-utils
-python-dotenv
-
-# psutil==5.8.0  # This is the latest as of my last update, make sure to use the version suitable for your application.
-# requests==2.25.1  # Latest version as of my last update.
-# prettytable==2.1.0  # Latest version as of my last update.
-# python-telegram-bot==13.7  # Latest version as of my last update.
-# eth-utils==1.10.0  # Latest version as of my last update.
-# web3==5.23.0  # Latest version as of my last update.
+web3==5.31.3
+psutil==5.8.0
+requests==2.26.0
+prettytable==3.5.0
+eth-utils==1.9.5
+python-dotenv==0.19.2
