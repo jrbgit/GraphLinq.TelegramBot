@@ -63,35 +63,37 @@ private_msg = 'This is a private command. Please interact directly with me here 
 
 # /websites
 websites = [
-    ['Home', 'https://glq.link/home'],
-    ['AI', 'https://glq.link/ai'],
-    ['Analytics', 'https://glq.link/analytics'],
-    ['App', 'https://glq.link/app'],
-    ['Explorer', 'https://glq.link/explorer'],
-    ['Status', 'https://glq.link/network'],
-    ['Docs', 'https://glq.link/docs'],
-    ['IDE', 'https://glq.link/ide'],
-    ['MarketPlace', 'https://glq.link/marketplace']
+    ['Home', 'https://graphlinq.io'],
+    ['AI', 'https://ai.graphlinq.io'],
+    ['Analytics', 'https://analytics'],
+    ['App', 'https://app.graphlinq.io'],
+    ['Explorer', 'https://explorer.graphlinq.io'],
+    ['Hub', 'https://hub.graphlinq.io'],
+    ['Status', 'https://network.graphlinq.io'],
+    ['Docs', 'https://docs.graphlinq.io'],
+    ['IDE', 'https://ide.graphlinq.io'],
+    ['MarketPlace', 'https://marketplace.graphlinq.io']
 ]
 
 # /socials
 socials = [
-    ['Twitter', 'https://glq.link/twitter'],
-    ['Discord', 'https://glq.link/discord'],
-    ['LinkedIn', 'https://glq.link/linkedin'],
-    ['YouTube', 'https://glq.link/youtube'],
-    ['Reddit', 'https://glq.link/reddit']
+    ['Twitter', 'https://twitter.com/graphlinq_proto'],
+    ['Discord', 'https://discord.com/invite/tCCas5sCWA'],
+    ['LinkedIn', 'https://www.linkedin.com/company/graphlinq-protocol'],
+    ['YouTube', 'https://www.youtube.com/@graphlinqprotocol4007/videos'],
+    ['Reddit', 'https://www.reddit.com/r/graphlinq'],
+    ['Medium', 'https://graphlinq.medium.com/']
 ]
 
 # /staking
 staking = [
-    ['Website', 'https://glq.link/staking'],
-    ['How-to', 'https://glq.link/stakingdocs']
+    ['Website', 'https://app.graphlinq.io/app/staking'],
+    ['How-to', 'https://graphlinq.medium.com/glq-staking-migrated-live-on-graphlinq-chain-70a8156d0875']
 ]
 
 # /documentation
 documentation = [
-    ['Docs','https://glq.link/docs']
+    ['Docs','https://docs.graphlinq.io']
 ]
 
 # /shortcuts
@@ -110,37 +112,31 @@ shortcuts = [
 
 # /buy cex
 cex_listings = [
-    ['KuCoin', 'USDT', 'https://glq.link/kucoinGLQ_USDT'],
-    ['KuCoin', 'BTC', 'https://glq.link/kucoinGLQ_BTC'],
-    ['Gate io', 'ETH', 'https://glq.link/gateioGLQ_ETH'],
-    ['Gate io', 'USDT', 'https://glq.link/gateioGLQ_USDT'],
-    ['Bilaxy', 'ETH', 'https://glq.link/bilaxyGLQ_ETH'],
-    ['MEXC', 'USDT', 'https://glq.link/mexcGLQ_USDT'],
-    ['BitGet', 'USDT', 'https://glq.link/bitgetGLQ_USDT'],
-    ['CoinEx', 'USDT', 'https://glq.link/coinexGLQ_USDT'],
-    ['CoinTide', 'USDT', 'https://glq.link/cointideGLQ_USDT']
+    ['KuCoin', 'USDT', 'https://trade.kucoin.com/GLQ-USDT'],
+    ['KuCoin', 'BTC', 'https://trade.kucoin.com/GLQ-BTC'],
+    ['Gate io', 'USDT', 'https://gate.io/trade/glq_usdt'],
+    ['Bilaxy', 'ETH', 'https://bilaxy.com/trade/GLQ_ETH'],
+    ['MEXC', 'USDT', 'https://www.mexc.com/exchange/GLQ_USDT'],
+    ['CoinEx', 'USDT', 'https://www.coinex.com/exchange/GLQ-USDT'],
+    ['CoinTide', 'USDT', 'https://cointide.io/spot/GLQ_USDT']
 ]
 
 # /buy dex
 dex_listings = [
-    ['Uniswap v3', 'WETH', 'https://glq.link/uniswapv3'],
-    ['QuickSwap v3)', 'MATIC', 'https://glq.link/quickswapGLQ_MATICv3'],
-    ['QuickSwap v3)', 'ETH', 'https://glq.link/quickswapGLQ_ETHv3'],
-    ['QuickSwap v2)', 'ETH', 'https://glq.link/quickswapGLQ_ETHv2']
-    #['Uniswap v3 (Polygon)', 'MATIC', ''],
-    #['Uniswap v3 (Polygon)', 'ETH', '']
+    ['Uniswap v3', 'WETH', 'https://app.uniswap.org/explore/pools/ethereum/0xc3881fbb90daf3066da30016d578ed024027317c'],
+    ['QuickSwap v2)', 'ETH', 'https://quickswap.exchange/#/swap?outputCurrency=0x0cfc9a713a5c17bc8a5ff0379467f6558bacd0e0&inputCurrency=0x7ceb23fd6bc0add59e62ac25578270cff1b9f619']
 ]
 
 # /buy GLQ dex
 glq_dex_listings = [
-    ['GLQ Hub', 'WETH', 'https://glq.link/GLQ_HUB']
+    ['GLQ Hub', 'WETH', 'https://hub.graphlinq.io']
 ]
 
 # status websites
 status = [
-    ['Server Status','https://glq.link/status'],
-    ['Chain Status','https://glq.link/network']
+    ['Server Status','https://status.graphlinq.io'],
+    ['Chain Status','https://network.graphlinq.io']
 ]
 
 # Developer Application
-apply = 'Interested in working for GraphLinq? Apply here: https://glq.link/apply'
+apply = 'Interested in working for GraphLinq? Contact us today!'
