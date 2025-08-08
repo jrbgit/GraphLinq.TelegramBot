@@ -12,6 +12,7 @@ Description     : Contract Config - Telegram bot for GraphLinq
 """
 
 # Network to connect to like infura
+import os
 import logging
 import json
 from dotenv import load_dotenv
