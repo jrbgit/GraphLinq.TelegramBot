@@ -228,7 +228,7 @@ This project is open source and available under the MIT License.
 ## 🆘 Support
 
 - **Issues**: [GitHub Issues](https://github.com/jrbgit/GraphLinq.TelegramBot/issues)
-- **GraphLinq Discord**: [Join Community](https://discord.com/invite/tCCas5sCWA)
+- **GraphLinq Telegram**: [Join Community](https://t.me/graphlinq)
 - **Documentation**: [GraphLinq Docs](https://docs.graphlinq.io)
 
 ## 🔗 Related Links
