@@ -138,9 +138,9 @@ GraphLinq.TelegramBot/
 ├── config_msgs.py         # Bot messages and responses
 ├── requirements.txt       # Python dependencies
 ├── docker-compose.yml     # Docker deployment
-├── Dockerfile            # Docker container config
-├── .env                  # Environment variables (create this)
-└── logs/                 # Log files directory
+├── Dockerfile             # Docker container config
+├── .env                   # Environment variables (create this)
+└── logs/                  # Log files directory
     ├── debug.log
     ├── info.log
     ├── warning.log
